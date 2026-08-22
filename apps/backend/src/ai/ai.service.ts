@@ -14,7 +14,11 @@ import {
   type AiProviderName,
   type GenerateStructuredOutputResult,
 } from './providers/ai-provider.interface';
-import { resumeAnalysisSchema, type ResumeAnalysisResult } from './schemas/resume-analysis.schema';
+import {
+  resumeAnalysisJsonSchema,
+  resumeAnalysisSchema,
+  type ResumeAnalysisResult,
+} from './schemas/resume-analysis.schema';
 
 interface AnalyzeResumeInput {
   userId: string;
@@ -52,6 +56,7 @@ export class AiService {
         operation: 'resume_analysis',
         schemaName: 'ResumeAnalysisResult',
         prompt,
+        responseJsonSchema: resumeAnalysisJsonSchema,
       });
 
       const parsed = this.parseStructuredOutput(providerResult.text, resumeAnalysisSchema);
@@ -136,7 +141,7 @@ export class AiService {
 
   private getConfiguredModel(provider: AiProviderName): string {
     if (provider === 'gemini') {
-      return this.configService.get<string>('GEMINI_MODEL', 'gemini-1.5-flash');
+      return this.configService.get<string>('GEMINI_MODEL', 'gemini-2.5-flash-lite');
     }
 
     if (provider === 'openai') {

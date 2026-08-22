@@ -11,6 +11,8 @@ export interface GenerateStructuredOutputInput {
   prompt: string;
   model?: string;
   temperature?: number;
+  timeoutMs?: number;
+  responseJsonSchema?: Record<string, unknown>;
 }
 
 export interface GenerateStructuredOutputResult {

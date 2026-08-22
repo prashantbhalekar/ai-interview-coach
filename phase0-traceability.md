@@ -140,7 +140,7 @@ Status legend:
 | N-05 | No LangChain/LangGraph in initial implementation     | 5, 31       | dependency review                  | Pending |
 | N-06 | No separate vector DB                                | 11, 31      | architecture review                | Pending |
 | N-07 | No Next.js API routes for business backend APIs      | 3, 31       | repository lint rule/manual review | Pending |
-| N-08 | No Gemini API key exposure in frontend               | 20, 31      | env and code scan                  | Pending |
+| N-08 | No Gemini API key exposure in frontend               | 20, 31      | env and code scan                  | Done    |
 | N-09 | No synchronous expensive AI pipeline in request path | 8, 31       | architecture and load tests        | Pending |
 | N-10 | No worker deployment as Cloudflare Worker            | 13, 21, 31  | deployment review                  | Pending |
 | N-11 | No Cloudflare Pages deployment                       | 21, 31      | deployment review                  | Pending |
@@ -190,6 +190,24 @@ Status legend:
 | Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                                                |
 | UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set                                 |
 | Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                                                   |
+
+## R. Hardening Evidence Updates
+
+1. Gemini hardening completed before Phase 7 with these verified controls:
+   - Default model updated to gemini-2.5-flash-lite in backend env schema and .env example.
+   - Request timeout support added via GEMINI_REQUEST_TIMEOUT_MS with abort handling.
+   - Provider errors normalized to safe, typed detail structure with retriable classification for 429 and 5xx paths.
+   - Malformed or empty candidate responses now fail with explicit provider status.
+   - AI provider input now supports responseJsonSchema hints for Gemini JSON output contracts.
+2. Validation evidence for hardening:
+   - backend typecheck: pass
+   - backend lint: pass
+   - backend test:e2e: pass (includes expanded Gemini hardening scenarios)
+   - worker typecheck: pass
+3. Requirement status updates from hardening:
+   - E-01 remains Done with production-hardening validation added.
+   - E-02 remains Done with gemini-2.5-flash-lite default confirmed.
+   - N-08 moved to Done based on frontend grep scan for GEMINI_API_KEY and Gemini transport usage with no matches.
 
 ## Q. Sign-Off Decisions (Closed)
 
