@@ -11,10 +11,10 @@ Status legend:
 
 ## A. Product and Scope Requirements
 
-| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status  |
-| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ------- |
-| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Pending |
-| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Pending |
+| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status      |
+| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ----------- |
+| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | In Progress |
+| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Pending     |
 
 ## B. Monorepo and Toolchain
 

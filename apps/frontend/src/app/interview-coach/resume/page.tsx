@@ -1,45 +1,170 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FeedbackState } from '@/components/ui/feedback-state';
 import { LoadingState } from '@/components/ui/loading-state';
+import { ApiClientError, apiRequest, apiUpload } from '@/lib/api-client';
+import type { ResumeStatusResponse, ResumeUploadResponse } from '@/lib/contracts';
+import { routes } from '@/lib/routes';
+
+const STORAGE_KEY = 'aiic.resumeContext.v1';
+
+interface PersistedResumeContext {
+  resumeId: string;
+  resumeFileName: string;
+  resumeStatus: string;
+  resumeText: string;
+  jobDescription: string;
+  updatedAt: string;
+}
 
 export default function ResumePage() {
   const [resumeStatus, setResumeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
     'idle',
   );
   const [jobStatus, setJobStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeName, setResumeName] = useState<string>('');
+  const [resumeText, setResumeText] = useState<string>('');
   const [jobDescription, setJobDescription] = useState<string>('');
+  const [resumeErrorMessage, setResumeErrorMessage] = useState('Unable to upload resume.');
+  const [jobErrorMessage, setJobErrorMessage] = useState('Unable to save job context.');
+
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<PersistedResumeContext>;
+      setResumeName(parsed.resumeFileName ?? '');
+      setResumeText(parsed.resumeText ?? '');
+      setJobDescription(parsed.jobDescription ?? '');
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
+
+  function getAccessToken(): string | null {
+    return localStorage.getItem('aiic.accessToken');
+  }
+
+  function persistContext(context: PersistedResumeContext): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(context));
+  }
+
+  async function waitForStableResumeStatus(
+    token: string,
+    resumeId: string,
+  ): Promise<ResumeStatusResponse | null> {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        const status = await apiRequest<ResumeStatusResponse>(`/resumes/${resumeId}/status`, {
+          token,
+        });
+
+        if (status.status === 'QUEUED' || status.status === 'PROCESSING') {
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          continue;
+        }
+
+        return status;
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }
 
   async function handleResumeUpload(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setResumeStatus('loading');
+    setResumeErrorMessage('Unable to upload resume.');
 
-    await new Promise((resolve) => setTimeout(resolve, 850));
-
-    if (!resumeName.toLowerCase().endsWith('.pdf')) {
+    const token = getAccessToken();
+    if (!token) {
+      setResumeErrorMessage('Please log in before uploading a resume.');
       setResumeStatus('error');
       return;
     }
 
-    setResumeStatus('success');
+    if (!resumeFile || !resumeName.toLowerCase().endsWith('.pdf')) {
+      setResumeErrorMessage('Only PDF files are accepted in this MVP phase.');
+      setResumeStatus('error');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+
+      const upload = await apiUpload<ResumeUploadResponse>('/resumes/upload', formData, {
+        token,
+      });
+      const status = await waitForStableResumeStatus(token, upload.resumeId);
+
+      persistContext({
+        resumeId: upload.resumeId,
+        resumeFileName: upload.fileName,
+        resumeStatus: status?.status ?? upload.status,
+        resumeText,
+        jobDescription,
+        updatedAt: new Date().toISOString(),
+      });
+
+      setResumeStatus('success');
+    } catch (error: unknown) {
+      if (error instanceof ApiClientError) {
+        setResumeErrorMessage(error.message);
+      }
+      setResumeStatus('error');
+    }
   }
 
   async function handleJobSave(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setJobStatus('loading');
-
-    await new Promise((resolve) => setTimeout(resolve, 750));
+    setJobErrorMessage('Unable to save job context.');
 
     if (jobDescription.trim().length < 80) {
+      setJobErrorMessage(
+        'Provide at least a short paragraph so AI can match role expectations accurately.',
+      );
       setJobStatus('error');
       return;
     }
+
+    if (resumeText.trim().length < 120) {
+      setJobErrorMessage('Add resume text (at least 120 characters) to run structured analysis.');
+      setJobStatus('error');
+      return;
+    }
+
+    let existing: Partial<PersistedResumeContext> = {};
+    const existingRaw = localStorage.getItem(STORAGE_KEY);
+    if (existingRaw) {
+      try {
+        existing = JSON.parse(existingRaw) as Partial<PersistedResumeContext>;
+      } catch {
+        existing = {};
+      }
+    }
+
+    persistContext({
+      resumeId: existing.resumeId ?? '',
+      resumeFileName: existing.resumeFileName ?? resumeName,
+      resumeStatus: existing.resumeStatus ?? 'READY',
+      resumeText,
+      jobDescription,
+      updatedAt: new Date().toISOString(),
+    });
 
     setJobStatus('success');
   }
@@ -62,7 +187,20 @@ export default function ResumePage() {
                   className="input"
                   type="file"
                   accept="application/pdf"
-                  onChange={(event) => setResumeName(event.target.files?.[0]?.name ?? '')}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setResumeFile(file);
+                    setResumeName(file?.name ?? '');
+                  }}
+                />
+              </label>
+              <label>
+                Resume Text
+                <textarea
+                  className="textarea"
+                  placeholder="Paste resume text so AI can run structured analysis while PDF parsing jobs mature in the worker flow..."
+                  value={resumeText}
+                  onChange={(event) => setResumeText(event.target.value)}
                 />
               </label>
               {resumeStatus === 'idle' && !resumeName ? (
@@ -78,15 +216,11 @@ export default function ResumePage() {
                 <FeedbackState
                   variant="success"
                   title="Resume uploaded"
-                  message="Resume metadata is ready for async processing and analysis."
+                  message="Resume metadata is queued and context is saved. Proceed to analysis when job details are ready."
                 />
               ) : null}
               {resumeStatus === 'error' ? (
-                <FeedbackState
-                  variant="error"
-                  title="Upload failed"
-                  message="Only PDF files are accepted in this MVP phase."
-                />
+                <FeedbackState variant="error" title="Upload failed" message={resumeErrorMessage} />
               ) : null}
               <Button type="submit" disabled={resumeStatus === 'loading'}>
                 {resumeStatus === 'loading' ? 'Uploading...' : 'Upload Resume'}
@@ -115,14 +249,19 @@ export default function ResumePage() {
                 <FeedbackState
                   variant="success"
                   title="Job description saved"
-                  message="You can now proceed to the resume analysis page."
+                  message="Context is saved. Run live resume analysis from the next step."
+                  actions={
+                    <Link href={routes.analysis} className="btn btn-secondary">
+                      Open Analysis
+                    </Link>
+                  }
                 />
               ) : null}
               {jobStatus === 'error' ? (
                 <FeedbackState
                   variant="error"
                   title="Need more details"
-                  message="Provide at least a short paragraph so AI can match role expectations accurately."
+                  message={jobErrorMessage}
                 />
               ) : null}
               <Button type="submit" disabled={jobStatus === 'loading'}>

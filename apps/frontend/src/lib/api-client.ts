@@ -1,7 +1,7 @@
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export interface ApiErrorPayload {
-  message: string;
+  message: string | string[];
   statusCode?: number;
   error?: string;
 }
@@ -11,7 +11,11 @@ export class ApiClientError extends Error {
   readonly payload: ApiErrorPayload | null;
 
   constructor(status: number, payload: ApiErrorPayload | null, fallbackMessage: string) {
-    super(payload?.message ?? fallbackMessage);
+    const resolvedMessage = Array.isArray(payload?.message)
+      ? payload.message.join(', ')
+      : payload?.message;
+
+    super(resolvedMessage ?? fallbackMessage);
     this.name = 'ApiClientError';
     this.status = status;
     this.payload = payload;
@@ -64,6 +68,34 @@ export async function apiRequest<TResponse, TBody = unknown>(
   if (!response.ok) {
     const errorPayload = await parseError(response);
     throw new ApiClientError(response.status, errorPayload, 'Request failed');
+  }
+
+  return (await response.json()) as TResponse;
+}
+
+export async function apiUpload<TResponse>(
+  endpoint: string,
+  body: FormData,
+  options: Pick<RequestOptions<never>, 'token' | 'headers' | 'cache'> = {},
+): Promise<TResponse> {
+  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+
+  const headers = new Headers(options.headers);
+
+  if (options.token) {
+    headers.set('Authorization', `Bearer ${options.token}`);
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body,
+    cache: options.cache ?? 'no-store',
+  });
+
+  if (!response.ok) {
+    const errorPayload = await parseError(response);
+    throw new ApiClientError(response.status, errorPayload, 'Upload failed');
   }
 
   return (await response.json()) as TResponse;
