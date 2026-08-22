@@ -30,20 +30,20 @@ Status legend:
 | ---- | ---------------------------------------------------------------- | ----------------- | ------------- | ------------------------------------------ | ----------------------------------------------- | ----------- |
 | C-01 | Next.js + React + TS + Zod + ESLint + Jest                       | 3                 | 2             | apps/frontend scaffold                     | Build, lint, test scripts pass                  | Done        |
 | C-02 | No Next.js API routes for backend business logic                 | 3, 31             | 2             | frontend API client layer only             | Repo check: no business APIs in frontend routes | Done        |
-| C-03 | Frontend communicates with NestJS via HTTP APIs                  | 3                 | 2, 7          | API client module + contracts              | Integration tests against backend               | In Progress |
+| C-03 | Frontend communicates with NestJS via HTTP APIs                  | 3                 | 2, 7          | API client module + contracts              | Integration tests against backend               | Done        |
 | C-04 | Route model with root landing and coach under /interview-coach/* | 3 + Query Answers | 2             | app router pages and route helpers         | Route integration and navigation tests          | Done        |
 | C-05 | /interview-coach works correctly behind Cloudflare               | 3, 21             | 2, 9          | Next config and deployment settings        | Preview deploy verification                     | In Progress |
 | C-06 | Reusable components and centralized API layer                    | 3                 | 2             | UI primitives and data client architecture | Frontend code review and tests                  | Done        |
 
 ## D. Backend Requirements
 
-| ID   | Requirement                                        | BRD Section        | Planned Phase | Target Artifacts                     | Verification                        | Status      |
-| ---- | -------------------------------------------------- | ------------------ | ------------- | ------------------------------------ | ----------------------------------- | ----------- |
-| D-01 | NestJS + TS + Prisma + PostgreSQL + JWT + Passport | 4, 15              | 3             | backend app scaffold and modules     | Unit/integration tests              | In Progress |
-| D-02 | Feature module architecture and thin controllers   | 4                  | 3             | domain module structure              | Code review and architecture checks | In Progress |
-| D-03 | REST endpoints and API versioning with /api/v1     | 14 + Query Answers | 3, 7          | controllers and global prefix config | Endpoint tests under /api/v1 only   | In Progress |
-| D-04 | Health endpoint availability                       | 14, 32             | 3             | health module                        | GET /api/v1/health check            | Done        |
-| D-05 | Auth foundation with secure password hashing       | 15, 27             | 3             | auth module, guards, JWT strategy    | Auth integration tests              | In Progress |
+| ID   | Requirement                                        | BRD Section        | Planned Phase | Target Artifacts                     | Verification                        | Status |
+| ---- | -------------------------------------------------- | ------------------ | ------------- | ------------------------------------ | ----------------------------------- | ------ |
+| D-01 | NestJS + TS + Prisma + PostgreSQL + JWT + Passport | 4, 15              | 3             | backend app scaffold and modules     | Unit/integration tests              | Done   |
+| D-02 | Feature module architecture and thin controllers   | 4                  | 3             | domain module structure              | Code review and architecture checks | Done   |
+| D-03 | REST endpoints and API versioning with /api/v1     | 14 + Query Answers | 3, 7          | controllers and global prefix config | Endpoint tests under /api/v1 only   | Done   |
+| D-04 | Health endpoint availability                       | 14, 32             | 3             | health module                        | GET /api/v1/health check            | Done   |
+| D-05 | Auth foundation with secure password hashing       | 15, 27             | 3             | auth module, guards, JWT strategy    | Auth integration tests              | Done   |
 
 ## E. AI Architecture and Structured Output
 
@@ -67,11 +67,11 @@ Status legend:
 
 ## G. Database and Data Modeling
 
-| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status      |
-| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ----------- |
-| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | In Progress |
-| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Pending     |
-| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending     |
+| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status  |
+| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ------- |
+| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Done    |
+| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Pending |
+| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending |
 
 ## H. Queue and Worker
 
@@ -106,7 +106,7 @@ Status legend:
 | ---- | --------------------------------------------------------------- | ----------- | ------------- | --------------------------------------------- | ------------------------------ | ----------- |
 | K-01 | Security controls baseline                                      | 27          | 3, 4, 10      | validation, authz, CORS, headers, rate limits | security integration checks    | In Progress |
 | K-02 | Avoid sensitive logging and secret leakage                      | 20, 27, 31  | 3, 10         | logging policy and sanitizers                 | log audit tests                | Pending     |
-| K-03 | Jest tests across frontend/backend/worker                       | 24          | 2, 3, 5, 10   | unit/integration/e2e suites                   | CI passing tests               | Pending     |
+| K-03 | Jest tests across frontend/backend/worker                       | 24          | 2, 3, 5, 10   | unit/integration/e2e suites                   | CI passing tests               | In Progress |
 | K-04 | Use real PostgreSQL and Redis for backend e2e where appropriate | 24          | 10            | test infra setup                              | e2e pipeline pass              | Pending     |
 | K-05 | Code quality toolchain and hooks                                | 26          | 1             | lint/format/hooks config                      | local pre-commit and CI checks | Done        |
 
@@ -182,14 +182,14 @@ Status legend:
 
 ## P. Phase 0 Artifact Status
 
-| Artifact                              | Path                                                  | Status      | Notes                                                             |
-| ------------------------------------- | ----------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
-| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized     |
-| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 1 done and Phase 2 frontend rows updated     |
-| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized    |
-| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                |
-| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set |
-| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                   |
+| Artifact                              | Path                                                  | Status      | Notes                                                              |
+| ------------------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------------ |
+| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized      |
+| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 2 and Phase 3 core rows updated to done state |
+| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized     |
+| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                 |
+| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set  |
+| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                    |
 
 ## Q. Sign-Off Decisions (Closed)
 
