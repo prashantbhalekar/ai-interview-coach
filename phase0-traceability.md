@@ -18,11 +18,11 @@ Status legend:
 
 ## B. Monorepo and Toolchain
 
-| ID   | Requirement                                                | BRD Section | Planned Phase | Target Artifacts                                            | Verification                 | Status  |
-| ---- | ---------------------------------------------------------- | ----------- | ------------- | ----------------------------------------------------------- | ---------------------------- | ------- |
-| B-01 | pnpm workspace monorepo structure                          | 2           | 1             | root workspace files, apps/, packages/, docker/, workflows/ | Folder and config validation | Pending |
-| B-02 | Node 22, pnpm 9.12.0, strict TS, ES2022, Node16 resolution | 2           | 1             | package manager config, tsconfig.base                       | Typecheck and runtime checks | Pending |
-| B-03 | apps only for deployables, packages for shared code        | 2           | 1             | directory conventions                                       | Repo structure review        | Pending |
+| ID   | Requirement                                                | BRD Section | Planned Phase | Target Artifacts                                            | Verification                 | Status |
+| ---- | ---------------------------------------------------------- | ----------- | ------------- | ----------------------------------------------------------- | ---------------------------- | ------ |
+| B-01 | pnpm workspace monorepo structure                          | 2           | 1             | root workspace files, apps/, packages/, docker/, workflows/ | Folder and config validation | Done   |
+| B-02 | Node 22, pnpm 9.12.0, strict TS, ES2022, Node16 resolution | 2           | 1             | package manager config, tsconfig.base                       | Typecheck and runtime checks | Done   |
+| B-03 | apps only for deployables, packages for shared code        | 2           | 1             | directory conventions                                       | Repo structure review        | Done   |
 
 ## C. Frontend Requirements
 
@@ -92,13 +92,13 @@ Status legend:
 
 ## J. Docker and Local Development
 
-| ID   | Requirement                                       | BRD Section | Planned Phase | Target Artifacts                | Verification                  | Status  |
-| ---- | ------------------------------------------------- | ----------- | ------------- | ------------------------------- | ----------------------------- | ------- |
-| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | Pending |
-| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | Pending |
-| J-03 | Standard dev/build/lint/typecheck/test commands   | 19          | 1             | root scripts and turbo pipeline | command execution checks      | Pending |
-| J-04 | App-specific run commands by filter               | 19          | 1             | package scripts                 | app startup checks            | Pending |
-| J-05 | .env.example with no real secrets                 | 19, 20, 32  | 1, 10         | env templates                   | secret scan and review        | Pending |
+| ID   | Requirement                                       | BRD Section | Planned Phase | Target Artifacts                | Verification                  | Status      |
+| ---- | ------------------------------------------------- | ----------- | ------------- | ------------------------------- | ----------------------------- | ----------- |
+| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | Pending     |
+| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | Pending     |
+| J-03 | Standard dev/build/lint/typecheck/test commands   | 19          | 1             | root scripts and turbo pipeline | command execution checks      | Done        |
+| J-04 | App-specific run commands by filter               | 19          | 1             | package scripts                 | app startup checks            | Done        |
+| J-05 | .env.example with no real secrets                 | 19, 20, 32  | 1, 10         | env templates                   | secret scan and review        | In Progress |
 
 ## K. Security, Quality, and Testing
 
@@ -108,7 +108,7 @@ Status legend:
 | K-02 | Avoid sensitive logging and secret leakage                      | 20, 27, 31  | 3, 10         | logging policy and sanitizers                 | log audit tests                | Pending |
 | K-03 | Jest tests across frontend/backend/worker                       | 24          | 2, 3, 5, 10   | unit/integration/e2e suites                   | CI passing tests               | Pending |
 | K-04 | Use real PostgreSQL and Redis for backend e2e where appropriate | 24          | 10            | test infra setup                              | e2e pipeline pass              | Pending |
-| K-05 | Code quality toolchain and hooks                                | 26          | 1             | lint/format/hooks config                      | local pre-commit and CI checks | Pending |
+| K-05 | Code quality toolchain and hooks                                | 26          | 1             | lint/format/hooks config                      | local pre-commit and CI checks | Done    |
 
 ## L. CI/CD and Documentation
 
@@ -182,14 +182,14 @@ Status legend:
 
 ## P. Phase 0 Artifact Status
 
-| Artifact                              | Path                                                  | Status      | Notes                                                              |
-| ------------------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------------ |
-| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized      |
-| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix created; row statuses will be updated during implementation |
-| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized     |
-| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                 |
-| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set  |
-| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                    |
+| Artifact                              | Path                                                  | Status      | Notes                                                             |
+| ------------------------------------- | ----------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized     |
+| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 1 rows updated with validation outcomes      |
+| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized    |
+| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                |
+| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set |
+| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                   |
 
 ## Q. Sign-Off Decisions (Closed)
 
