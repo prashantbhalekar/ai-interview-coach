@@ -2,6 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "preserve",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "lib": ["dom", "dom.iterable", "es2022"],
     "noEmit": true,
     "incremental": true,

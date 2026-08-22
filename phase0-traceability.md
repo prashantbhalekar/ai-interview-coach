@@ -26,14 +26,14 @@ Status legend:
 
 ## C. Frontend Requirements
 
-| ID   | Requirement                                                       | BRD Section       | Planned Phase | Target Artifacts                           | Verification                                    | Status  |
-| ---- | ----------------------------------------------------------------- | ----------------- | ------------- | ------------------------------------------ | ----------------------------------------------- | ------- |
-| C-01 | Next.js + React + TS + Zod + ESLint + Jest                        | 3                 | 2             | apps/frontend scaffold                     | Build, lint, test scripts pass                  | Pending |
-| C-02 | No Next.js API routes for backend business logic                  | 3, 31             | 2             | frontend API client layer only             | Repo check: no business APIs in frontend routes | Pending |
-| C-03 | Frontend communicates with NestJS via HTTP APIs                   | 3                 | 2, 7          | API client module + contracts              | Integration tests against backend               | Pending |
-| C-04 | Route model with root landing and coach under /interview-coach/\* | 3 + Query Answers | 2             | app router pages and route helpers         | Route integration and navigation tests          | Pending |
-| C-05 | /interview-coach works correctly behind Cloudflare                | 3, 21             | 2, 9          | Next config and deployment settings        | Preview deploy verification                     | Pending |
-| C-06 | Reusable components and centralized API layer                     | 3                 | 2             | UI primitives and data client architecture | Frontend code review and tests                  | Pending |
+| ID   | Requirement                                                      | BRD Section       | Planned Phase | Target Artifacts                           | Verification                                    | Status      |
+| ---- | ---------------------------------------------------------------- | ----------------- | ------------- | ------------------------------------------ | ----------------------------------------------- | ----------- |
+| C-01 | Next.js + React + TS + Zod + ESLint + Jest                       | 3                 | 2             | apps/frontend scaffold                     | Build, lint, test scripts pass                  | Done        |
+| C-02 | No Next.js API routes for backend business logic                 | 3, 31             | 2             | frontend API client layer only             | Repo check: no business APIs in frontend routes | Done        |
+| C-03 | Frontend communicates with NestJS via HTTP APIs                  | 3                 | 2, 7          | API client module + contracts              | Integration tests against backend               | In Progress |
+| C-04 | Route model with root landing and coach under /interview-coach/* | 3 + Query Answers | 2             | app router pages and route helpers         | Route integration and navigation tests          | Done        |
+| C-05 | /interview-coach works correctly behind Cloudflare               | 3, 21             | 2, 9          | Next config and deployment settings        | Preview deploy verification                     | In Progress |
+| C-06 | Reusable components and centralized API layer                    | 3                 | 2             | UI primitives and data client architecture | Frontend code review and tests                  | Done        |
 
 ## D. Backend Requirements
 
@@ -120,14 +120,14 @@ Status legend:
 
 ## M. UI/UX Design Requirements (Mandatory in MVP)
 
-| ID   | Requirement                                                        | BRD Section           | Planned Phase | Target Artifacts                             | Verification                      | Status  |
-| ---- | ------------------------------------------------------------------ | --------------------- | ------------- | -------------------------------------------- | --------------------------------- | ------- |
-| M-01 | Portfolio-consistent visual language, independently recreated      | UI/UX + Query Answers | 2, 7          | design tokens, UI primitives, page templates | visual acceptance checklist       | Pending |
-| M-02 | Polished product UX from MVP start, not admin dashboard look       | UI/UX + Query Answers | 2, 7          | polished layouts for key screens             | UX review and stakeholder signoff | Pending |
-| M-03 | Landing page UX with hero and primary CTAs                         | UI/UX                 | 2, 7          | root and coach entry pages                   | route and UI verification         | Pending |
-| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | Pending |
-| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | Pending |
-| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | Pending |
+| ID   | Requirement                                                        | BRD Section           | Planned Phase | Target Artifacts                             | Verification                      | Status      |
+| ---- | ------------------------------------------------------------------ | --------------------- | ------------- | -------------------------------------------- | --------------------------------- | ----------- |
+| M-01 | Portfolio-consistent visual language, independently recreated      | UI/UX + Query Answers | 2, 7          | design tokens, UI primitives, page templates | visual acceptance checklist       | In Progress |
+| M-02 | Polished product UX from MVP start, not admin dashboard look       | UI/UX + Query Answers | 2, 7          | polished layouts for key screens             | UX review and stakeholder signoff | In Progress |
+| M-03 | Landing page UX with hero and primary CTAs                         | UI/UX                 | 2, 7          | root and coach entry pages                   | route and UI verification         | Done        |
+| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | Pending     |
+| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | Pending     |
+| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | Pending     |
 
 ## N. Prohibited Technologies and Patterns
 
@@ -185,7 +185,7 @@ Status legend:
 | Artifact                              | Path                                                  | Status      | Notes                                                             |
 | ------------------------------------- | ----------------------------------------------------- | ----------- | ----------------------------------------------------------------- |
 | Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized     |
-| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 1 rows updated with validation outcomes      |
+| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 1 done and Phase 2 frontend rows updated     |
 | Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized    |
 | Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                |
 | UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set |

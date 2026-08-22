@@ -242,4 +242,5 @@ Exit Gates:
 1. Blueprint finalized.
 2. Sign-off decisions are closed and reflected in Phase 0 artifacts.
 3. Phase 1 monorepo foundation implementation completed and validated.
-4. Next action: begin Phase 2 (frontend shell/design system) and Phase 3 (backend core) in parallel.
+4. Phase 2 frontend shell and design system foundation started with route shell, reusable UI primitives, and centralized API client.
+5. Next action: continue Phase 2 refinement and start Phase 3 backend core in parallel.
