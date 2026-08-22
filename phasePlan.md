@@ -245,4 +245,5 @@ Exit Gates:
 4. Phase 2 frontend shell and design system is completed with canonical route coverage, reusable portfolio-consistent primitives, dedicated API client layer, and live backend integration for auth and dashboard profile loading.
 5. Phase 3 backend core platform is completed with global /api/v1 enforcement, env validation, Prisma schema plus initial migration and seed, auth/users/me modules, baseline security headers, and passing integration checks for auth and protected routes.
 6. Phase 4 storage and resume ingestion is completed with storage abstraction, local and R2 providers, protected PDF upload endpoint, metadata-only resume persistence, status retrieval API, and queue handoff transition from UPLOADED to QUEUED.
-7. Next action: begin Phase 5 queue runtime wiring with BullMQ and worker processors to transition resumes from QUEUED to PROCESSING and COMPLETED or FAILED.
+7. Phase 5 queue and worker runtime is in progress with BullMQ-based backend enqueue service, Redis configuration validation, worker queue runtime initialization, and resume lifecycle transitions from QUEUED to PROCESSING to COMPLETED or FAILED.
+8. Next action: add Redis-backed integration harness for end-to-end enqueue and consume verification and extend processors for analysis and interview jobs.

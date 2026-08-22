@@ -4,6 +4,7 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  REDIS_URL: z.string().url('REDIS_URL must be a valid URL'),
   JWT_SECRET: z.string().min(8, 'JWT_SECRET must be at least 8 characters'),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
   STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),

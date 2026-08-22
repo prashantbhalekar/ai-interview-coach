@@ -45,7 +45,11 @@ export class ResumesService {
       },
     });
 
-    const queueJobId = await this.resumeQueueService.enqueueResumeProcessing(createdResume.id);
+    const queueJobId = await this.resumeQueueService.enqueueResumeProcessing({
+      resumeId: createdResume.id,
+      userId: createdResume.userId,
+      storageKey: createdResume.storageKey,
+    });
 
     const resume = await this.prisma.resume.update({
       where: {

@@ -75,11 +75,11 @@ Status legend:
 
 ## H. Queue and Worker
 
-| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status  |
-| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ------- |
-| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | Pending |
-| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | Pending |
-| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Pending |
+| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status      |
+| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ----------- |
+| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | In Progress |
+| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | In Progress |
+| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Pending     |
 
 ## I. Deployment and Runtime
 

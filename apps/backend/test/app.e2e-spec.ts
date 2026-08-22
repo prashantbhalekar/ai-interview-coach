@@ -144,7 +144,10 @@ describe('App (e2e)', () => {
   };
 
   const resumeQueueMock = {
-    enqueueResumeProcessing: jest.fn(async (resumeId: string) => `job-${resumeId}`),
+    enqueueResumeProcessing: jest.fn(
+      async ({ resumeId }: { resumeId: string; userId: string; storageKey: string }) =>
+        `job-${resumeId}`,
+    ),
   };
 
   beforeAll(async () => {
@@ -156,6 +159,7 @@ describe('App (e2e)', () => {
     process.env.NODE_ENV = 'test';
     process.env.PORT = '3001';
     process.env.FRONTEND_URL = 'http://localhost:3000';
+    process.env.REDIS_URL = 'redis://localhost:6380';
     process.env.DATABASE_URL =
       'postgresql://postgres:postgres@localhost:5432/ai_interview_coach_test?schema=public';
     process.env.JWT_SECRET = 'test-secret-123';
