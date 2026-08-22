@@ -57,13 +57,13 @@ Status legend:
 
 ## F. Resume, Storage, and Document Data
 
-| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status      |
-| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ----------- |
-| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done        |
-| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | In Progress |
-| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done        |
-| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done        |
-| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Pending     |
+| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status  |
+| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ------- |
+| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done    |
+| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Done    |
+| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done    |
+| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done    |
+| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Pending |
 
 ## G. Database and Data Modeling
 

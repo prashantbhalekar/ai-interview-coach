@@ -4,6 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { ResumeQueueService } from '../src/resumes/resume-queue.service';
 import { StorageService } from '../src/storage/storage.service';
 
 describe('App (e2e)', () => {
@@ -111,6 +112,25 @@ describe('App (e2e)', () => {
           resumes.find((resume) => resume.id === where.id && resume.userId === where.userId) ??
           null,
       ),
+      update: jest.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id: string };
+          data: { status: 'UPLOADED' | 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' };
+        }) => {
+          const resume = resumes.find((entry) => entry.id === where.id);
+
+          if (!resume) {
+            throw new Error('Resume not found for update');
+          }
+
+          resume.status = data.status;
+          resume.updatedAt = new Date();
+          return resume;
+        },
+      ),
     },
   };
 
@@ -121,6 +141,10 @@ describe('App (e2e)', () => {
       url: `r2://test-bucket/${key}`,
       sizeBytes: body.byteLength,
     })),
+  };
+
+  const resumeQueueMock = {
+    enqueueResumeProcessing: jest.fn(async (resumeId: string) => `job-${resumeId}`),
   };
 
   beforeAll(async () => {
@@ -147,6 +171,8 @@ describe('App (e2e)', () => {
       .useValue(prismaMock)
       .overrideProvider(StorageService)
       .useValue(storageMock)
+      .overrideProvider(ResumeQueueService)
+      .useValue(resumeQueueMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -169,6 +195,7 @@ describe('App (e2e)', () => {
     idCounter = 0;
     resumeIdCounter = 0;
     storageMock.upload.mockClear();
+    resumeQueueMock.enqueueResumeProcessing.mockClear();
   });
 
   afterAll(async () => {
@@ -277,7 +304,7 @@ describe('App (e2e)', () => {
     });
   });
 
-  it('/api/v1/resumes/upload (POST) stores PDF metadata and returns accepted status', async () => {
+  it('/api/v1/resumes/upload (POST) queues resume and returns accepted status', async () => {
     const registerResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
@@ -297,11 +324,14 @@ describe('App (e2e)', () => {
       .expect(202);
 
     expect(uploadResponse.body).toMatchObject({
-      status: 'UPLOADED',
+      status: 'QUEUED',
       fileName: 'resume.pdf',
+      queueJobId: uploadResponse.body.queueJobId,
     });
     expect(typeof uploadResponse.body.resumeId).toBe('string');
+    expect(typeof uploadResponse.body.queueJobId).toBe('string');
     expect(storageMock.upload).toHaveBeenCalledTimes(1);
+    expect(resumeQueueMock.enqueueResumeProcessing).toHaveBeenCalledTimes(1);
   });
 
   it('/api/v1/resumes/upload (POST) rejects non-PDF files', async () => {
@@ -366,7 +396,7 @@ describe('App (e2e)', () => {
     expect(statusResponse.body).toMatchObject({
       id: uploadResponse.body.resumeId,
       fileName: 'owner-resume.pdf',
-      status: 'UPLOADED',
+      status: 'QUEUED',
     });
 
     await request(app.getHttpServer())

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import type { ResumeStatusResponseDto } from './dto/resume-status-response.dto';
 import type { ResumeUploadResponseDto } from './dto/resume-upload-response.dto';
+import { ResumeQueueService } from './resume-queue.service';
 
 interface UploadedFile {
   originalname: string;
@@ -16,6 +17,7 @@ export class ResumesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly resumeQueueService: ResumeQueueService,
   ) {}
 
   async uploadResume(userId: string, file?: UploadedFile): Promise<ResumeUploadResponseDto> {
@@ -30,7 +32,7 @@ export class ResumesService {
       contentType: file.mimetype,
     });
 
-    const resume = await this.prisma.resume.create({
+    const createdResume = await this.prisma.resume.create({
       data: {
         userId,
         status: 'UPLOADED',
@@ -43,9 +45,21 @@ export class ResumesService {
       },
     });
 
+    const queueJobId = await this.resumeQueueService.enqueueResumeProcessing(createdResume.id);
+
+    const resume = await this.prisma.resume.update({
+      where: {
+        id: createdResume.id,
+      },
+      data: {
+        status: 'QUEUED',
+      },
+    });
+
     return {
       resumeId: resume.id,
       status: resume.status,
+      queueJobId,
       fileName: resume.fileName,
       createdAt: resume.createdAt,
     };
