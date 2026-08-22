@@ -10,14 +10,21 @@ interface ResumeProcessingJobPayload {
   storageKey: string;
 }
 
-interface GenericJobPayload {
-  id: string;
+interface AnalysisProcessingJobPayload {
+  analysisId: string;
   userId: string;
 }
 
-const RESUME_QUEUE_NAME = 'resume-processing';
-const ANALYSIS_QUEUE_NAME = 'analysis-processing';
-const INTERVIEW_QUEUE_NAME = 'interview-processing';
+interface InterviewProcessingJobPayload {
+  interviewSessionId: string;
+  userId: string;
+}
+
+const queueNames = {
+  resumeProcessing: 'resume-processing',
+  analysisProcessing: 'analysis-processing',
+  interviewProcessing: 'interview-processing',
+} as const;
 
 @Injectable()
 export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
@@ -35,7 +42,7 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
 
     this.workers.push(
       new Worker<ResumeProcessingJobPayload>(
-        RESUME_QUEUE_NAME,
+        queueNames.resumeProcessing,
         async (job) => this.processResumeJob(job),
         {
           connection: { url: redisUrl },
@@ -45,8 +52,8 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.workers.push(
-      new Worker<GenericJobPayload>(
-        ANALYSIS_QUEUE_NAME,
+      new Worker<AnalysisProcessingJobPayload>(
+        queueNames.analysisProcessing,
         async (job) => this.processAnalysisJob(job),
         {
           connection: { url: redisUrl },
@@ -56,8 +63,8 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.workers.push(
-      new Worker<GenericJobPayload>(
-        INTERVIEW_QUEUE_NAME,
+      new Worker<InterviewProcessingJobPayload>(
+        queueNames.interviewProcessing,
         async (job) => this.processInterviewJob(job),
         {
           connection: { url: redisUrl },
@@ -107,15 +114,15 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async processAnalysisJob(job: Job<GenericJobPayload>): Promise<void> {
+  private async processAnalysisJob(job: Job<AnalysisProcessingJobPayload>): Promise<void> {
     this.logger.log(
-      `Analysis job received id=${job.data.id} userId=${job.data.userId} (processor scaffold)`,
+      `Analysis job received analysisId=${job.data.analysisId} userId=${job.data.userId} (processor scaffold)`,
     );
   }
 
-  private async processInterviewJob(job: Job<GenericJobPayload>): Promise<void> {
+  private async processInterviewJob(job: Job<InterviewProcessingJobPayload>): Promise<void> {
     this.logger.log(
-      `Interview job received id=${job.data.id} userId=${job.data.userId} (processor scaffold)`,
+      `Interview job received interviewSessionId=${job.data.interviewSessionId} userId=${job.data.userId} (processor scaffold)`,
     );
   }
 

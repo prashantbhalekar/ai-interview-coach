@@ -22,6 +22,7 @@ export class ResumeQueueService implements OnModuleDestroy {
     const queue = this.getQueue();
 
     const job = await queue.add(RESUME_PROCESSING_JOB_NAME, payload, {
+      jobId: `resume-${payload.resumeId}`,
       attempts: 3,
       backoff: {
         type: 'exponential',

@@ -12,6 +12,7 @@
     "test:e2e": "echo 'No worker e2e tests yet'"
   },
   "dependencies": {
+    "@ai-interview-coach/shared-types": "workspace:*",
     "@nestjs/config": "^4.0.2",
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",

@@ -75,11 +75,11 @@ Status legend:
 
 ## H. Queue and Worker
 
-| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status      |
-| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ----------- |
-| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | In Progress |
-| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | In Progress |
-| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Pending     |
+| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status  |
+| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ------- |
+| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | Done    |
+| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | Done    |
+| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Pending |
 
 ## I. Deployment and Runtime
 
@@ -182,14 +182,14 @@ Status legend:
 
 ## P. Phase 0 Artifact Status
 
-| Artifact                              | Path                                                  | Status      | Notes                                                                                          |
-| ------------------------------------- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized                                  |
-| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 4 storage and resume ingestion rows advanced with API and schema coverage |
-| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized                                 |
-| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                                             |
-| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set                              |
-| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                                                |
+| Artifact                              | Path                                                  | Status      | Notes                                                                                             |
+| ------------------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized                                     |
+| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; queue and worker requirements advanced through Phase 5 completion and verification |
+| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized                                    |
+| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                                                |
+| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set                                 |
+| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                                                   |
 
 ## Q. Sign-Off Decisions (Closed)
 
