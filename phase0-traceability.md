@@ -57,21 +57,21 @@ Status legend:
 
 ## F. Resume, Storage, and Document Data
 
-| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status  |
-| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ------- |
-| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Pending |
-| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Pending |
-| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Pending |
-| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Pending |
-| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Pending |
+| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status      |
+| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ----------- |
+| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done        |
+| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | In Progress |
+| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done        |
+| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done        |
+| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Pending     |
 
 ## G. Database and Data Modeling
 
-| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status  |
-| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ------- |
-| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Done    |
-| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Pending |
-| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending |
+| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status      |
+| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ----------- |
+| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Done        |
+| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | In Progress |
+| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending     |
 
 ## H. Queue and Worker
 
@@ -182,14 +182,14 @@ Status legend:
 
 ## P. Phase 0 Artifact Status
 
-| Artifact                              | Path                                                  | Status      | Notes                                                              |
-| ------------------------------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------------ |
-| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized      |
-| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 2 and Phase 3 core rows updated to done state |
-| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized     |
-| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                 |
-| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set  |
-| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                    |
+| Artifact                              | Path                                                  | Status      | Notes                                                                                          |
+| ------------------------------------- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| Phase blueprint                       | phasePlan.md                                          | Done        | Phase sequence, goals, dependencies, and exit gates finalized                                  |
+| Requirement traceability matrix       | phase0-traceability.md                                | In Progress | Matrix active; Phase 4 storage and resume ingestion rows advanced with API and schema coverage |
+| Canonical routing contract            | docs/phase-0/canonical-routing-contract.md            | Done        | Canonical nested Interview Coach routes and examples finalized                                 |
+| Canonical API contract                | docs/phase-0/canonical-api-contract.md                | Done        | /api/v1 contract defined for all initial endpoints                                             |
+| UI/UX acceptance checklist            | docs/phase-0/ui-ux-acceptance-checklist.md            | Done        | Portfolio-consistent, responsive, and state-feedback criteria set                              |
+| Backend deployment compatibility gate | docs/phase-0/backend-deployment-compatibility-gate.md | Done        | Mandatory Worker compatibility checks finalized                                                |
 
 ## Q. Sign-Off Decisions (Closed)
 

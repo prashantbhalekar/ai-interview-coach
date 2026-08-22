@@ -4,6 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { StorageService } from '../src/storage/storage.service';
 
 describe('App (e2e)', () => {
   let app: INestApplication;
@@ -15,8 +16,23 @@ describe('App (e2e)', () => {
     createdAt: Date;
     updatedAt: Date;
   }>;
+  let resumes: Array<{
+    id: string;
+    userId: string;
+    status: 'UPLOADED' | 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    storageKey: string;
+    storageBucket: string;
+    storageUrl: string;
+    failureReason: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
 
   let idCounter = 0;
+  let resumeIdCounter = 0;
 
   const prismaMock = {
     $connect: jest.fn(),
@@ -53,11 +69,65 @@ describe('App (e2e)', () => {
         },
       ),
     },
+    resume: {
+      create: jest.fn(
+        async ({
+          data,
+        }: {
+          data: {
+            userId: string;
+            status: 'UPLOADED' | 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+            fileName: string;
+            mimeType: string;
+            sizeBytes: number;
+            storageKey: string;
+            storageBucket: string;
+            storageUrl: string;
+          };
+        }) => {
+          resumeIdCounter += 1;
+          const now = new Date();
+          const resume = {
+            id: `resume-${resumeIdCounter}`,
+            userId: data.userId,
+            status: data.status,
+            fileName: data.fileName,
+            mimeType: data.mimeType,
+            sizeBytes: data.sizeBytes,
+            storageKey: data.storageKey,
+            storageBucket: data.storageBucket,
+            storageUrl: data.storageUrl,
+            failureReason: null,
+            createdAt: now,
+            updatedAt: now,
+          };
+
+          resumes.push(resume);
+          return resume;
+        },
+      ),
+      findFirst: jest.fn(
+        async ({ where }: { where: { id: string; userId: string } }) =>
+          resumes.find((resume) => resume.id === where.id && resume.userId === where.userId) ??
+          null,
+      ),
+    },
+  };
+
+  const storageMock = {
+    upload: jest.fn(async ({ key, body }: { key: string; body: Buffer }) => ({
+      key,
+      bucket: 'test-bucket',
+      url: `r2://test-bucket/${key}`,
+      sizeBytes: body.byteLength,
+    })),
   };
 
   beforeAll(async () => {
     users = [];
+    resumes = [];
     idCounter = 0;
+    resumeIdCounter = 0;
 
     process.env.NODE_ENV = 'test';
     process.env.PORT = '3001';
@@ -75,6 +145,8 @@ describe('App (e2e)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
+      .overrideProvider(StorageService)
+      .useValue(storageMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -93,7 +165,10 @@ describe('App (e2e)', () => {
 
   beforeEach(() => {
     users = [];
+    resumes = [];
     idCounter = 0;
+    resumeIdCounter = 0;
+    storageMock.upload.mockClear();
   });
 
   afterAll(async () => {
@@ -200,5 +275,103 @@ describe('App (e2e)', () => {
       statusCode: 409,
       message: 'Email is already registered',
     });
+  });
+
+  it('/api/v1/resumes/upload (POST) stores PDF metadata and returns accepted status', async () => {
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Resume User',
+        email: 'resume@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const uploadResponse = await request(app.getHttpServer())
+      .post('/api/v1/resumes/upload')
+      .set('Authorization', `Bearer ${registerResponse.body.accessToken}`)
+      .attach('file', Buffer.from('%PDF-1.4 test resume'), {
+        filename: 'resume.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(202);
+
+    expect(uploadResponse.body).toMatchObject({
+      status: 'UPLOADED',
+      fileName: 'resume.pdf',
+    });
+    expect(typeof uploadResponse.body.resumeId).toBe('string');
+    expect(storageMock.upload).toHaveBeenCalledTimes(1);
+  });
+
+  it('/api/v1/resumes/upload (POST) rejects non-PDF files', async () => {
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Resume User',
+        email: 'resume-invalid@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const uploadResponse = await request(app.getHttpServer())
+      .post('/api/v1/resumes/upload')
+      .set('Authorization', `Bearer ${registerResponse.body.accessToken}`)
+      .attach('file', Buffer.from('plain text'), {
+        filename: 'resume.txt',
+        contentType: 'text/plain',
+      })
+      .expect(400);
+
+    expect(uploadResponse.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      message: 'Only PDF files are accepted',
+    });
+  });
+
+  it('/api/v1/resumes/:id/status (GET) returns status for owner only', async () => {
+    const ownerRegisterResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Owner',
+        email: 'owner@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const viewerRegisterResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Viewer',
+        email: 'viewer@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const uploadResponse = await request(app.getHttpServer())
+      .post('/api/v1/resumes/upload')
+      .set('Authorization', `Bearer ${ownerRegisterResponse.body.accessToken}`)
+      .attach('file', Buffer.from('%PDF-1.4 owner resume'), {
+        filename: 'owner-resume.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(202);
+
+    const statusResponse = await request(app.getHttpServer())
+      .get(`/api/v1/resumes/${uploadResponse.body.resumeId}/status`)
+      .set('Authorization', `Bearer ${ownerRegisterResponse.body.accessToken}`)
+      .expect(200);
+
+    expect(statusResponse.body).toMatchObject({
+      id: uploadResponse.body.resumeId,
+      fileName: 'owner-resume.pdf',
+      status: 'UPLOADED',
+    });
+
+    await request(app.getHttpServer())
+      .get(`/api/v1/resumes/${uploadResponse.body.resumeId}/status`)
+      .set('Authorization', `Bearer ${viewerRegisterResponse.body.accessToken}`)
+      .expect(404);
   });
 });

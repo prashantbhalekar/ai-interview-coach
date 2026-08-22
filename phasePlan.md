@@ -244,4 +244,5 @@ Exit Gates:
 3. Phase 1 monorepo foundation implementation completed and validated.
 4. Phase 2 frontend shell and design system is completed with canonical route coverage, reusable portfolio-consistent primitives, dedicated API client layer, and live backend integration for auth and dashboard profile loading.
 5. Phase 3 backend core platform is completed with global /api/v1 enforcement, env validation, Prisma schema plus initial migration and seed, auth/users/me modules, baseline security headers, and passing integration checks for auth and protected routes.
-6. Next action: begin Phase 4 storage and resume ingestion implementation.
+6. Phase 4 storage and resume ingestion is in progress with storage abstraction, local and R2 providers, protected PDF upload endpoint, metadata-only resume persistence, and status retrieval API backed by Prisma Resume model.
+7. Next action: add queue handoff hooks and resume processing lifecycle transitions from UPLOADED to downstream async states.
