@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import type { CreateInterviewSessionRequest, InterviewSessionSummary } from '@/l
 import { routes } from '@/lib/routes';
 
 export default function InterviewsPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'ready' | 'unauthenticated' | 'error'>(
     'loading',
   );
@@ -60,11 +62,19 @@ export default function InterviewsPage() {
       return;
     }
 
+    const normalizedFocusArea = focusArea.trim();
+    if (!normalizedFocusArea) {
+      setCreateStatus('error');
+      setErrorMessage('Please add a focus area before starting a session.');
+      return;
+    }
+
     setCreateStatus('loading');
+    setErrorMessage('Unable to load sessions.');
 
     try {
       const payload: CreateInterviewSessionRequest = {
-        focusArea,
+        focusArea: normalizedFocusArea,
       };
 
       const created = await apiRequest<{ id: string }, CreateInterviewSessionRequest>(
@@ -76,8 +86,14 @@ export default function InterviewsPage() {
         },
       );
 
-      window.location.href = routes.interview(created.id);
+      router.push(routes.interview(created.id));
     } catch (error: unknown) {
+      if (error instanceof ApiClientError && error.status === 401) {
+        localStorage.removeItem('aiic.accessToken');
+        setStatus('unauthenticated');
+        return;
+      }
+
       if (error instanceof ApiClientError) {
         setErrorMessage(error.message);
       }
@@ -103,6 +119,7 @@ export default function InterviewsPage() {
                 className="input"
                 value={focusArea}
                 onChange={(event) => setFocusArea(event.target.value)}
+                maxLength={100}
               />
             </label>
             {createStatus === 'error' ? (
@@ -112,7 +129,10 @@ export default function InterviewsPage() {
                 message={errorMessage}
               />
             ) : null}
-            <Button onClick={createSession} disabled={createStatus === 'loading'}>
+            <Button
+              onClick={createSession}
+              disabled={createStatus === 'loading' || status === 'unauthenticated'}
+            >
               {createStatus === 'loading' ? 'Creating...' : 'Start Interview Session'}
             </Button>
           </div>

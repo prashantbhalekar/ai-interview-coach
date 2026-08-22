@@ -11,10 +11,10 @@ Status legend:
 
 ## A. Product and Scope Requirements
 
-| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status      |
-| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ----------- |
-| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | In Progress |
-| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Pending     |
+| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status  |
+| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ------- |
+| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Done    |
+| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Pending |
 
 ## B. Monorepo and Toolchain
 
@@ -125,9 +125,9 @@ Status legend:
 | M-01 | Portfolio-consistent visual language, independently recreated      | UI/UX + Query Answers | 2, 7          | design tokens, UI primitives, page templates | visual acceptance checklist       | In Progress |
 | M-02 | Polished product UX from MVP start, not admin dashboard look       | UI/UX + Query Answers | 2, 7          | polished layouts for key screens             | UX review and stakeholder signoff | In Progress |
 | M-03 | Landing page UX with hero and primary CTAs                         | UI/UX                 | 2, 7          | root and coach entry pages                   | route and UI verification         | Done        |
-| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | In Progress |
-| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | In Progress |
-| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | In Progress |
+| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | Done        |
+| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | Done        |
+| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | Done        |
 
 ## N. Prohibited Technologies and Patterns
 
@@ -229,6 +229,23 @@ Status legend:
    - backend typecheck: pass
    - backend lint: pass
    - backend test:e2e: pass (includes interview lifecycle + ownership tests)
+   - frontend typecheck: pass
+   - frontend lint: pass
+   - frontend build: pass
+
+## T. Phase 7 UX Polish Acceptance Updates
+
+1. Phase 7 interview UX consistency hardening implemented:
+   - Interview session and results pages now guard missing route ids with user-facing error feedback.
+   - Interview actions now handle auth-expiry on submit/create by clearing stale token and switching to unauthenticated state.
+   - Interview creation now trims focus area input and blocks empty submissions.
+   - Transcript question previews now use conditional ellipsis instead of always appending "...".
+   - Results page now provides fallback guidance when strengths, improvements, or follow-up plan arrays are empty.
+   - Dashboard is now data-driven from authenticated interview history and persisted resume context instead of static placeholder metrics.
+2. Database migration application evidence:
+   - Applied migrations against local PostgreSQL at localhost:5433 for the active development database.
+   - Verified non-interactively via prisma migrate deploy with "No pending migrations to apply."
+3. Validation evidence for this polish pass:
    - frontend typecheck: pass
    - frontend lint: pass
    - frontend build: pass

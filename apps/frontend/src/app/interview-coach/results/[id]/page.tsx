@@ -13,9 +13,17 @@ import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { InterviewResultsResponse } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
 
+function truncateWithEllipsis(input: string, limit: number): string {
+  if (input.length <= limit) {
+    return input;
+  }
+
+  return `${input.slice(0, limit)}...`;
+}
+
 export default function ResultsPage() {
   const params = useParams<{ id: string }>();
-  const sessionId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const sessionId = Array.isArray(params.id) ? params.id[0] : (params.id ?? '');
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'unauthenticated' | 'error'>(
     'loading',
@@ -24,6 +32,12 @@ export default function ResultsPage() {
   const [results, setResults] = useState<InterviewResultsResponse | null>(null);
 
   useEffect(() => {
+    if (!sessionId) {
+      setErrorMessage('Interview session ID is missing.');
+      setStatus('error');
+      return;
+    }
+
     const token = localStorage.getItem('aiic.accessToken');
 
     if (!token) {
@@ -32,6 +46,7 @@ export default function ResultsPage() {
     }
 
     const authToken: string = token;
+    setStatus('loading');
 
     async function loadResults(): Promise<void> {
       try {
@@ -107,7 +122,10 @@ export default function ResultsPage() {
             <section className="info-grid">
               <Card title="Strengths" eyebrow="Evaluation">
                 <ul className="metric-list">
-                  {results.strengths.map((strength) => (
+                  {(results.strengths.length > 0
+                    ? results.strengths
+                    : ['Continue delivering clear and structured interview responses.']
+                  ).map((strength) => (
                     <li key={strength}>
                       <span>{strength}</span>
                       <strong>Strong</strong>
@@ -117,7 +135,10 @@ export default function ResultsPage() {
               </Card>
               <Card title="Improvements" eyebrow="Evaluation">
                 <ul className="metric-list">
-                  {results.improvements.map((improvement) => (
+                  {(results.improvements.length > 0
+                    ? results.improvements
+                    : ['Keep practicing and collect more answer data for sharper feedback.']
+                  ).map((improvement) => (
                     <li key={improvement}>
                       <span>{improvement}</span>
                       <strong>Focus</strong>
@@ -129,7 +150,10 @@ export default function ResultsPage() {
 
             <Card title="Follow-up Plan" eyebrow="Next Session Prep">
               <ul className="metric-list">
-                {results.followUpPlan.map((item) => (
+                {(results.followUpPlan.length > 0
+                  ? results.followUpPlan
+                  : ['Start another session to generate a personalized follow-up plan.']
+                ).map((item) => (
                   <li key={item}>
                     <span>{item}</span>
                     <strong>Next</strong>
@@ -143,7 +167,7 @@ export default function ResultsPage() {
                 {results.answers.map((answer) => (
                   <li key={answer.id}>
                     <span>
-                      Q{answer.order + 1}: {answer.questionText.slice(0, 58)}...
+                      Q{answer.order + 1}: {truncateWithEllipsis(answer.questionText, 58)}
                     </span>
                     <strong>{answer.score}</strong>
                   </li>

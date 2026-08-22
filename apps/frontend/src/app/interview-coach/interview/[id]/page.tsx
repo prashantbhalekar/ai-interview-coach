@@ -17,9 +17,17 @@ import type {
 } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
 
+function truncateWithEllipsis(input: string, limit: number): string {
+  if (input.length <= limit) {
+    return input;
+  }
+
+  return `${input.slice(0, limit)}...`;
+}
+
 export default function InterviewSessionPage() {
   const params = useParams<{ id: string }>();
-  const sessionId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const sessionId = Array.isArray(params.id) ? params.id[0] : (params.id ?? '');
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'unauthenticated' | 'error'>(
     'loading',
@@ -57,6 +65,12 @@ export default function InterviewSessionPage() {
   }
 
   useEffect(() => {
+    if (!sessionId) {
+      setErrorMessage('Interview session ID is missing.');
+      setStatus('error');
+      return;
+    }
+
     const token = localStorage.getItem('aiic.accessToken');
 
     if (!token) {
@@ -64,6 +78,7 @@ export default function InterviewSessionPage() {
       return;
     }
 
+    setStatus('loading');
     void loadSession(token);
   }, [sessionId]);
 
@@ -104,6 +119,12 @@ export default function InterviewSessionPage() {
       setSubmitStatus('idle');
       await loadSession(token);
     } catch (error: unknown) {
+      if (error instanceof ApiClientError && error.status === 401) {
+        localStorage.removeItem('aiic.accessToken');
+        setStatus('unauthenticated');
+        return;
+      }
+
       if (error instanceof ApiClientError) {
         setErrorMessage(error.message);
       }
@@ -134,7 +155,16 @@ export default function InterviewSessionPage() {
         ) : null}
 
         {status === 'error' ? (
-          <FeedbackState variant="error" title="Session unavailable" message={errorMessage} />
+          <FeedbackState
+            variant="error"
+            title="Session unavailable"
+            message={errorMessage}
+            actions={
+              <Link href={routes.interviews} className="btn btn-secondary">
+                Back to Sessions
+              </Link>
+            }
+          />
         ) : null}
 
         {status === 'ready' && session ? (
@@ -216,7 +246,7 @@ export default function InterviewSessionPage() {
                   {session.answers.map((answer) => (
                     <li key={answer.id}>
                       <span>
-                        Q{answer.order + 1}: {answer.questionText.slice(0, 52)}...
+                        Q{answer.order + 1}: {truncateWithEllipsis(answer.questionText, 52)}
                       </span>
                       <strong>{answer.score}</strong>
                     </li>
