@@ -163,6 +163,7 @@ describe('App (e2e)', () => {
     process.env.DATABASE_URL =
       'postgresql://postgres:postgres@localhost:5432/ai_interview_coach_test?schema=public';
     process.env.JWT_SECRET = 'test-secret-123';
+    process.env.AI_PROVIDER = 'ollama';
 
     const { AppModule } = require('../src/app.module') as {
       AppModule: new (...args: never[]) => unknown;

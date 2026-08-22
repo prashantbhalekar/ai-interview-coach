@@ -47,13 +47,13 @@ Status legend:
 
 ## E. AI Architecture and Structured Output
 
-| ID   | Requirement                                    | BRD Section | Planned Phase | Target Artifacts                        | Verification                          | Status  |
-| ---- | ---------------------------------------------- | ----------- | ------------- | --------------------------------------- | ------------------------------------- | ------- |
-| E-01 | Gemini as initial provider with abstraction    | 5           | 6             | ai provider interface + gemini provider | Service tests with provider selection | Pending |
-| E-02 | Provider switch via env config                 | 5, 20       | 6             | config module and provider factory      | Env-based provider resolution tests   | Pending |
-| E-03 | No LangChain/LangGraph initially               | 5, 31       | 6             | dependency policy                       | Dependency audit                      | Pending |
-| E-04 | Structured AI response validation with schemas | 6           | 6             | zod schemas and parsing pipeline        | schema validation tests               | Pending |
-| E-05 | Prompt layer files separated from services     | 7           | 6             | prompt files under ai/prompts           | File structure and usage check        | Pending |
+| ID   | Requirement                                    | BRD Section | Planned Phase | Target Artifacts                        | Verification                          | Status      |
+| ---- | ---------------------------------------------- | ----------- | ------------- | --------------------------------------- | ------------------------------------- | ----------- |
+| E-01 | Gemini as initial provider with abstraction    | 5           | 6             | ai provider interface + gemini provider | Service tests with provider selection | In Progress |
+| E-02 | Provider switch via env config                 | 5, 20       | 6             | config module and provider factory      | Env-based provider resolution tests   | In Progress |
+| E-03 | No LangChain/LangGraph initially               | 5, 31       | 6             | dependency policy                       | Dependency audit                      | Pending     |
+| E-04 | Structured AI response validation with schemas | 6           | 6             | zod schemas and parsing pipeline        | schema validation tests               | In Progress |
+| E-05 | Prompt layer files separated from services     | 7           | 6             | prompt files under ai/prompts           | File structure and usage check        | In Progress |
 
 ## F. Resume, Storage, and Document Data
 

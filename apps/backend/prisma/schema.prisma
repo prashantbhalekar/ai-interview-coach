@@ -15,8 +15,20 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   resumes      Resume[]
+  aiUsages     AiUsage[]
 
   @@index([email])
+}
+
+enum AiProvider {
+  GEMINI
+  OPENAI
+  OLLAMA
+}
+
+enum AiUsageStatus {
+  SUCCESS
+  ERROR
 }
 
 enum ResumeProcessingStatus {
@@ -44,4 +56,27 @@ model Resume {
 
   @@index([userId])
   @@index([status])
+}
+
+model AiUsage {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     AiProvider
+  model        String
+  operation    String
+  status       AiUsageStatus
+  promptChars  Int
+  responseChars Int?
+  inputTokens  Int?
+  outputTokens Int?
+  latencyMs    Int
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+  @@index([operation])
+  @@index([createdAt])
 }

@@ -246,4 +246,5 @@ Exit Gates:
 5. Phase 3 backend core platform is completed with global /api/v1 enforcement, env validation, Prisma schema plus initial migration and seed, auth/users/me modules, baseline security headers, and passing integration checks for auth and protected routes.
 6. Phase 4 storage and resume ingestion is completed with storage abstraction, local and R2 providers, protected PDF upload endpoint, metadata-only resume persistence, status retrieval API, and queue handoff transition from UPLOADED to QUEUED.
 7. Phase 5 queue and worker runtime is completed with BullMQ-based backend enqueue services, Redis configuration validation, worker queue runtime initialization, resume lifecycle transitions from QUEUED to PROCESSING to COMPLETED or FAILED, and a Redis-backed smoke harness enqueue, retry, and consume behavior.
-8. Next action: start Phase 6 AI platform implementation with provider abstraction, structured output schemas, and usage tracking.
+8. Phase 6 AI platform and structured outputs is now in progress with provider abstraction, Gemini provider baseline, guarded AI endpoint, schema validation with malformed-output handling, and AI usage persistence scaffolding.
+9. Next action: wire resume processing to AI analysis jobs and implement concrete OpenAI/Ollama providers after abstraction-level tests are added.
