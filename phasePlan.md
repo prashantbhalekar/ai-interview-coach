@@ -242,5 +242,6 @@ Exit Gates:
 1. Blueprint finalized.
 2. Sign-off decisions are closed and reflected in Phase 0 artifacts.
 3. Phase 1 monorepo foundation implementation completed and validated.
-4. Phase 2 frontend shell and design system foundation started with route shell, reusable UI primitives, and centralized API client.
-5. Next action: continue Phase 2 refinement and start Phase 3 backend core in parallel.
+4. Phase 2 frontend refinement is in progress with responsive route shells and reusable loading, empty, error, and success states.
+5. Phase 3 backend core is in progress with global /api/v1 setup, auth/users foundation, env validation, and Prisma baseline.
+6. Next action: complete backend module hardening and connect frontend API layer to backend endpoints.

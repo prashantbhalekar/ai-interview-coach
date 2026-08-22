@@ -33,7 +33,8 @@ body {
 
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  background: radial-gradient(circle at 8% 12%, rgba(124, 152, 255, 0.18), transparent 36%),
+  background:
+    radial-gradient(circle at 8% 12%, rgba(124, 152, 255, 0.18), transparent 36%),
     radial-gradient(circle at 84% 0%, rgba(86, 212, 255, 0.16), transparent 34%),
     linear-gradient(160deg, var(--background) 0%, var(--background-soft) 100%);
   color: var(--text);
@@ -207,7 +208,8 @@ p {
 }
 
 .grid-surface {
-  background-image: linear-gradient(to right, rgba(180, 199, 244, 0.06) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(180, 199, 244, 0.06) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(180, 199, 244, 0.06) 1px, transparent 1px);
   background-size: 52px 52px;
 }
@@ -222,7 +224,9 @@ p {
 .card {
   border-radius: calc(var(--radius) + 4px);
   padding: 1rem;
-  transition: transform 220ms var(--ease-snappy), border-color 220ms var(--ease-snappy),
+  transition:
+    transform 220ms var(--ease-snappy),
+    border-color 220ms var(--ease-snappy),
     box-shadow 220ms var(--ease-snappy);
 }
 
@@ -261,8 +265,11 @@ p {
   padding: 0.65rem 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 180ms var(--ease-snappy), border-color 180ms var(--ease-snappy),
-    background-color 180ms var(--ease-snappy), color 180ms var(--ease-snappy);
+  transition:
+    transform 180ms var(--ease-snappy),
+    border-color 180ms var(--ease-snappy),
+    background-color 180ms var(--ease-snappy),
+    color 180ms var(--ease-snappy);
 }
 
 .btn:hover {
@@ -339,6 +346,95 @@ p {
   inset: 0 auto 0 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--primary), var(--cyan));
+}
+
+.feedback {
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.feedback-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.feedback-copy h4 {
+  font-size: 0.95rem;
+}
+
+.feedback-copy p {
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.feedback-success {
+  border-color: color-mix(in oklab, var(--success) 50%, var(--border));
+  background: color-mix(in oklab, var(--success) 10%, transparent);
+}
+
+.feedback-error {
+  border-color: rgba(255, 130, 130, 0.5);
+  background: rgba(255, 98, 98, 0.08);
+}
+
+.feedback-info {
+  border-color: color-mix(in oklab, var(--cyan) 45%, var(--border));
+  background: color-mix(in oklab, var(--cyan) 8%, transparent);
+}
+
+.empty-state {
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px dashed var(--border);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.empty-state h4 {
+  font-size: 0.98rem;
+}
+
+.empty-state p {
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.empty-action {
+  margin-top: 0.2rem;
+}
+
+.loading-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-soft);
+}
+
+.loading-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--primary), var(--cyan));
+  animation: pulse 1s var(--ease-snappy) infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
 }
 
 .info-grid {

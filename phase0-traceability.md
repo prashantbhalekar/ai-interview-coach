@@ -37,13 +37,13 @@ Status legend:
 
 ## D. Backend Requirements
 
-| ID   | Requirement                                        | BRD Section        | Planned Phase | Target Artifacts                     | Verification                        | Status  |
-| ---- | -------------------------------------------------- | ------------------ | ------------- | ------------------------------------ | ----------------------------------- | ------- |
-| D-01 | NestJS + TS + Prisma + PostgreSQL + JWT + Passport | 4, 15              | 3             | backend app scaffold and modules     | Unit/integration tests              | Pending |
-| D-02 | Feature module architecture and thin controllers   | 4                  | 3             | domain module structure              | Code review and architecture checks | Pending |
-| D-03 | REST endpoints and API versioning with /api/v1     | 14 + Query Answers | 3, 7          | controllers and global prefix config | Endpoint tests under /api/v1 only   | Pending |
-| D-04 | Health endpoint availability                       | 14, 32             | 3             | health module                        | GET /api/v1/health check            | Pending |
-| D-05 | Auth foundation with secure password hashing       | 15, 27             | 3             | auth module, guards, JWT strategy    | Auth integration tests              | Pending |
+| ID   | Requirement                                        | BRD Section        | Planned Phase | Target Artifacts                     | Verification                        | Status      |
+| ---- | -------------------------------------------------- | ------------------ | ------------- | ------------------------------------ | ----------------------------------- | ----------- |
+| D-01 | NestJS + TS + Prisma + PostgreSQL + JWT + Passport | 4, 15              | 3             | backend app scaffold and modules     | Unit/integration tests              | In Progress |
+| D-02 | Feature module architecture and thin controllers   | 4                  | 3             | domain module structure              | Code review and architecture checks | In Progress |
+| D-03 | REST endpoints and API versioning with /api/v1     | 14 + Query Answers | 3, 7          | controllers and global prefix config | Endpoint tests under /api/v1 only   | In Progress |
+| D-04 | Health endpoint availability                       | 14, 32             | 3             | health module                        | GET /api/v1/health check            | Done        |
+| D-05 | Auth foundation with secure password hashing       | 15, 27             | 3             | auth module, guards, JWT strategy    | Auth integration tests              | In Progress |
 
 ## E. AI Architecture and Structured Output
 
@@ -67,11 +67,11 @@ Status legend:
 
 ## G. Database and Data Modeling
 
-| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status  |
-| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ------- |
-| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Pending |
-| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Pending |
-| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending |
+| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status      |
+| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ----------- |
+| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | In Progress |
+| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Pending     |
+| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending     |
 
 ## H. Queue and Worker
 
@@ -102,13 +102,13 @@ Status legend:
 
 ## K. Security, Quality, and Testing
 
-| ID   | Requirement                                                     | BRD Section | Planned Phase | Target Artifacts                              | Verification                   | Status  |
-| ---- | --------------------------------------------------------------- | ----------- | ------------- | --------------------------------------------- | ------------------------------ | ------- |
-| K-01 | Security controls baseline                                      | 27          | 3, 4, 10      | validation, authz, CORS, headers, rate limits | security integration checks    | Pending |
-| K-02 | Avoid sensitive logging and secret leakage                      | 20, 27, 31  | 3, 10         | logging policy and sanitizers                 | log audit tests                | Pending |
-| K-03 | Jest tests across frontend/backend/worker                       | 24          | 2, 3, 5, 10   | unit/integration/e2e suites                   | CI passing tests               | Pending |
-| K-04 | Use real PostgreSQL and Redis for backend e2e where appropriate | 24          | 10            | test infra setup                              | e2e pipeline pass              | Pending |
-| K-05 | Code quality toolchain and hooks                                | 26          | 1             | lint/format/hooks config                      | local pre-commit and CI checks | Done    |
+| ID   | Requirement                                                     | BRD Section | Planned Phase | Target Artifacts                              | Verification                   | Status      |
+| ---- | --------------------------------------------------------------- | ----------- | ------------- | --------------------------------------------- | ------------------------------ | ----------- |
+| K-01 | Security controls baseline                                      | 27          | 3, 4, 10      | validation, authz, CORS, headers, rate limits | security integration checks    | In Progress |
+| K-02 | Avoid sensitive logging and secret leakage                      | 20, 27, 31  | 3, 10         | logging policy and sanitizers                 | log audit tests                | Pending     |
+| K-03 | Jest tests across frontend/backend/worker                       | 24          | 2, 3, 5, 10   | unit/integration/e2e suites                   | CI passing tests               | Pending     |
+| K-04 | Use real PostgreSQL and Redis for backend e2e where appropriate | 24          | 10            | test infra setup                              | e2e pipeline pass              | Pending     |
+| K-05 | Code quality toolchain and hooks                                | 26          | 1             | lint/format/hooks config                      | local pre-commit and CI checks | Done        |
 
 ## L. CI/CD and Documentation
 
@@ -125,9 +125,9 @@ Status legend:
 | M-01 | Portfolio-consistent visual language, independently recreated      | UI/UX + Query Answers | 2, 7          | design tokens, UI primitives, page templates | visual acceptance checklist       | In Progress |
 | M-02 | Polished product UX from MVP start, not admin dashboard look       | UI/UX + Query Answers | 2, 7          | polished layouts for key screens             | UX review and stakeholder signoff | In Progress |
 | M-03 | Landing page UX with hero and primary CTAs                         | UI/UX                 | 2, 7          | root and coach entry pages                   | route and UI verification         | Done        |
-| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | Pending     |
-| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | Pending     |
-| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | Pending     |
+| M-04 | Interview coach page UX sections and controls                      | UI/UX                 | 7             | coach workflow pages                         | functional UI walkthrough         | In Progress |
+| M-05 | Dashboard UX metrics/actions/history                               | UI/UX                 | 7             | dashboard page and widgets                   | acceptance walkthrough            | In Progress |
+| M-06 | Resume analysis and interview results card/badge/progress patterns | UI/UX                 | 7             | analysis and results pages                   | UI acceptance checklist           | In Progress |
 
 ## N. Prohibited Technologies and Patterns
 
