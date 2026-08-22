@@ -4,6 +4,7 @@ import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.schema';
 import { HealthModule } from './health/health.module';
+import { InterviewsModule } from './interviews/interviews.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { UsersModule } from './users/users.module';
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     HealthModule,
     ResumesModule,
+    InterviewsModule,
   ],
 })
 export class AppModule {}

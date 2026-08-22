@@ -16,6 +16,7 @@ model User {
   updatedAt    DateTime @updatedAt
   resumes      Resume[]
   aiUsages     AiUsage[]
+  interviewSessions InterviewSession[]
 
   @@index([email])
 }
@@ -37,6 +38,11 @@ enum ResumeProcessingStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum InterviewSessionStatus {
+  ACTIVE
+  COMPLETED
 }
 
 model Resume {
@@ -79,4 +85,65 @@ model AiUsage {
   @@index([status])
   @@index([operation])
   @@index([createdAt])
+}
+
+model InterviewSession {
+  id                   String                 @id @default(cuid())
+  userId               String
+  user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                String
+  focusArea            String?
+  status               InterviewSessionStatus @default(ACTIVE)
+  currentQuestionIndex Int                    @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  questions            InterviewQuestion[]
+  answers              InterviewAnswer[]
+  evaluation           InterviewEvaluation?
+
+  @@index([userId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model InterviewQuestion {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  order     Int
+  text      String
+  createdAt DateTime         @default(now())
+  answers   InterviewAnswer[]
+
+  @@unique([sessionId, order])
+  @@index([sessionId])
+}
+
+model InterviewAnswer {
+  id             String             @id @default(cuid())
+  sessionId      String
+  session        InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       InterviewQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order          Int
+  answerText     String
+  score          Int
+  feedbackSummary String
+  followUpQuestion String
+  createdAt      DateTime           @default(now())
+
+  @@unique([sessionId, order])
+  @@index([sessionId])
+}
+
+model InterviewEvaluation {
+  id           String           @id @default(cuid())
+  sessionId    String           @unique
+  session      InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  overallScore Int
+  strengths    String[]
+  improvements String[]
+  followUpPlan String[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 }

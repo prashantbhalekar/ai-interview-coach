@@ -31,9 +31,86 @@ describe('App (e2e)', () => {
     createdAt: Date;
     updatedAt: Date;
   }>;
+  let interviewSessions: Array<{
+    id: string;
+    userId: string;
+    title: string;
+    focusArea: string | null;
+    status: 'ACTIVE' | 'COMPLETED';
+    currentQuestionIndex: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+  let interviewQuestions: Array<{
+    id: string;
+    sessionId: string;
+    order: number;
+    text: string;
+    createdAt: Date;
+  }>;
+  let interviewAnswers: Array<{
+    id: string;
+    sessionId: string;
+    questionId: string;
+    order: number;
+    answerText: string;
+    score: number;
+    feedbackSummary: string;
+    followUpQuestion: string;
+    createdAt: Date;
+  }>;
+  let interviewEvaluations: Array<{
+    id: string;
+    sessionId: string;
+    overallScore: number;
+    strengths: string[];
+    improvements: string[];
+    followUpPlan: string[];
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
 
   let idCounter = 0;
   let resumeIdCounter = 0;
+  let interviewSessionCounter = 0;
+  let interviewQuestionCounter = 0;
+  let interviewAnswerCounter = 0;
+  let interviewEvaluationCounter = 0;
+
+  function attachInterviewSession(session: {
+    id: string;
+    userId: string;
+    title: string;
+    focusArea: string | null;
+    status: 'ACTIVE' | 'COMPLETED';
+    currentQuestionIndex: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    const questions = interviewQuestions
+      .filter((entry) => entry.sessionId === session.id)
+      .sort((a, b) => a.order - b.order);
+    const answers = interviewAnswers
+      .filter((entry) => entry.sessionId === session.id)
+      .sort((a, b) => a.order - b.order)
+      .map((answer) => {
+        const question = questions.find((entry) => entry.id === answer.questionId);
+        return {
+          ...answer,
+          question: {
+            text: question?.text ?? 'Unknown question',
+          },
+        };
+      });
+    const evaluation = interviewEvaluations.find((entry) => entry.sessionId === session.id) ?? null;
+
+    return {
+      ...session,
+      questions,
+      answers,
+      evaluation,
+    };
+  }
 
   const prismaMock = {
     $connect: jest.fn(),
@@ -132,6 +209,179 @@ describe('App (e2e)', () => {
         },
       ),
     },
+    interviewSession: {
+      create: jest.fn(async ({ data, include }: { data: any; include?: any }) => {
+        interviewSessionCounter += 1;
+        const now = new Date();
+
+        const session = {
+          id: `interview-session-${interviewSessionCounter}`,
+          userId: data.userId,
+          title: data.title,
+          focusArea: data.focusArea ?? null,
+          status: data.status,
+          currentQuestionIndex: data.currentQuestionIndex,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        interviewSessions.push(session);
+
+        const createdQuestions = (data.questions?.create ?? []) as Array<{
+          order: number;
+          text: string;
+        }>;
+        for (const questionData of createdQuestions) {
+          interviewQuestionCounter += 1;
+          interviewQuestions.push({
+            id: `interview-question-${interviewQuestionCounter}`,
+            sessionId: session.id,
+            order: questionData.order,
+            text: questionData.text,
+            createdAt: now,
+          });
+        }
+
+        if (!include) {
+          return session;
+        }
+
+        return attachInterviewSession(session);
+      }),
+      findMany: jest.fn(async ({ where }: { where: { userId: string } }) => {
+        return interviewSessions
+          .filter((session) => session.userId === where.userId)
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .map((session) => {
+            const questionCount = interviewQuestions.filter(
+              (question) => question.sessionId === session.id,
+            ).length;
+            const answerCount = interviewAnswers.filter(
+              (answer) => answer.sessionId === session.id,
+            ).length;
+            const evaluation =
+              interviewEvaluations.find((entry) => entry.sessionId === session.id) ?? null;
+
+            return {
+              ...session,
+              _count: {
+                questions: questionCount,
+                answers: answerCount,
+              },
+              evaluation,
+            };
+          });
+      }),
+      findFirst: jest.fn(async ({ where }: { where: { id: string; userId: string } }) => {
+        const session =
+          interviewSessions.find(
+            (entry) => entry.id === where.id && entry.userId === where.userId,
+          ) ?? null;
+
+        if (!session) {
+          return null;
+        }
+
+        return attachInterviewSession(session);
+      }),
+      update: jest.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+        const session = interviewSessions.find((entry) => entry.id === where.id);
+
+        if (!session) {
+          throw new Error('Interview session not found for update');
+        }
+
+        session.currentQuestionIndex = data.currentQuestionIndex;
+        session.status = data.status;
+        session.updatedAt = new Date();
+
+        return attachInterviewSession(session);
+      }),
+    },
+    interviewAnswer: {
+      create: jest.fn(async ({ data }: { data: any }) => {
+        interviewAnswerCounter += 1;
+        const createdAt = new Date();
+
+        const answer = {
+          id: `interview-answer-${interviewAnswerCounter}`,
+          sessionId: data.sessionId,
+          questionId: data.questionId,
+          order: data.order,
+          answerText: data.answerText,
+          score: data.score,
+          feedbackSummary: data.feedbackSummary,
+          followUpQuestion: data.followUpQuestion,
+          createdAt,
+        };
+
+        interviewAnswers.push(answer);
+
+        const question = interviewQuestions.find((entry) => entry.id === data.questionId);
+        return {
+          ...answer,
+          question: {
+            text: question?.text ?? 'Unknown question',
+          },
+        };
+      }),
+      findMany: jest.fn(async ({ where }: { where: { sessionId: string } }) => {
+        const questions = interviewQuestions.filter((entry) => entry.sessionId === where.sessionId);
+        return interviewAnswers
+          .filter((entry) => entry.sessionId === where.sessionId)
+          .sort((a, b) => a.order - b.order)
+          .map((answer) => ({
+            ...answer,
+            question: {
+              text:
+                questions.find((entry) => entry.id === answer.questionId)?.text ??
+                'Unknown question',
+            },
+          }));
+      }),
+    },
+    interviewEvaluation: {
+      upsert: jest.fn(
+        async ({
+          where,
+          update,
+          create,
+        }: {
+          where: { sessionId: string };
+          update: any;
+          create: any;
+        }) => {
+          const existing = interviewEvaluations.find(
+            (entry) => entry.sessionId === where.sessionId,
+          );
+          const now = new Date();
+
+          if (existing) {
+            existing.overallScore = update.overallScore;
+            existing.strengths = update.strengths;
+            existing.improvements = update.improvements;
+            existing.followUpPlan = update.followUpPlan;
+            existing.updatedAt = now;
+            return existing;
+          }
+
+          interviewEvaluationCounter += 1;
+          const entry = {
+            id: `interview-evaluation-${interviewEvaluationCounter}`,
+            sessionId: create.sessionId,
+            overallScore: create.overallScore,
+            strengths: create.strengths,
+            improvements: create.improvements,
+            followUpPlan: create.followUpPlan,
+            createdAt: now,
+            updatedAt: now,
+          };
+
+          interviewEvaluations.push(entry);
+          return entry;
+        },
+      ),
+    },
   };
 
   const storageMock = {
@@ -153,8 +403,16 @@ describe('App (e2e)', () => {
   beforeAll(async () => {
     users = [];
     resumes = [];
+    interviewSessions = [];
+    interviewQuestions = [];
+    interviewAnswers = [];
+    interviewEvaluations = [];
     idCounter = 0;
     resumeIdCounter = 0;
+    interviewSessionCounter = 0;
+    interviewQuestionCounter = 0;
+    interviewAnswerCounter = 0;
+    interviewEvaluationCounter = 0;
 
     process.env.NODE_ENV = 'test';
     process.env.PORT = '3001';
@@ -197,10 +455,25 @@ describe('App (e2e)', () => {
   beforeEach(() => {
     users = [];
     resumes = [];
+    interviewSessions = [];
+    interviewQuestions = [];
+    interviewAnswers = [];
+    interviewEvaluations = [];
     idCounter = 0;
     resumeIdCounter = 0;
+    interviewSessionCounter = 0;
+    interviewQuestionCounter = 0;
+    interviewAnswerCounter = 0;
+    interviewEvaluationCounter = 0;
     storageMock.upload.mockClear();
     resumeQueueMock.enqueueResumeProcessing.mockClear();
+    prismaMock.interviewSession.create.mockClear();
+    prismaMock.interviewSession.findMany.mockClear();
+    prismaMock.interviewSession.findFirst.mockClear();
+    prismaMock.interviewSession.update.mockClear();
+    prismaMock.interviewAnswer.create.mockClear();
+    prismaMock.interviewAnswer.findMany.mockClear();
+    prismaMock.interviewEvaluation.upsert.mockClear();
   });
 
   afterAll(async () => {
@@ -406,6 +679,133 @@ describe('App (e2e)', () => {
 
     await request(app.getHttpServer())
       .get(`/api/v1/resumes/${uploadResponse.body.resumeId}/status`)
+      .set('Authorization', `Bearer ${viewerRegisterResponse.body.accessToken}`)
+      .expect(404);
+  });
+
+  it('/api/v1/interviews/sessions lifecycle supports Q&A, evaluation, and results', async () => {
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Interview User',
+        email: 'interview-user@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const token = registerResponse.body.accessToken as string;
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/v1/interviews/sessions')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        focusArea: 'backend reliability',
+      })
+      .expect(201);
+
+    expect(createResponse.body).toMatchObject({
+      id: createResponse.body.id,
+      status: 'ACTIVE',
+      currentQuestionIndex: 0,
+    });
+    expect(Array.isArray(createResponse.body.questions)).toBe(true);
+    expect(createResponse.body.questions.length).toBeGreaterThan(0);
+
+    const sessionId = createResponse.body.id as string;
+    const currentQuestion = createResponse.body.currentQuestion as { id: string };
+
+    const answerResponse = await request(app.getHttpServer())
+      .post(`/api/v1/interviews/sessions/${sessionId}/answers`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        questionId: currentQuestion.id,
+        answerText:
+          'First, I map failure modes. Second, I define retries and idempotency boundaries. Finally, I track latency and error-rate metrics with rollback controls.',
+      })
+      .expect(201);
+
+    expect(answerResponse.body).toMatchObject({
+      sessionId,
+      status: 'ACTIVE',
+      submittedAnswer: {
+        questionId: currentQuestion.id,
+      },
+    });
+    expect(typeof answerResponse.body.submittedAnswer.score).toBe('number');
+
+    const sessionResponse = await request(app.getHttpServer())
+      .get(`/api/v1/interviews/sessions/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(sessionResponse.body).toMatchObject({
+      id: sessionId,
+      status: 'ACTIVE',
+      currentQuestionIndex: 1,
+    });
+    expect(sessionResponse.body.answers).toHaveLength(1);
+
+    const resultsResponse = await request(app.getHttpServer())
+      .get(`/api/v1/interviews/sessions/${sessionId}/results`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(resultsResponse.body).toMatchObject({
+      sessionId,
+      status: 'ACTIVE',
+    });
+    expect(typeof resultsResponse.body.overallScore).toBe('number');
+    expect(Array.isArray(resultsResponse.body.strengths)).toBe(true);
+    expect(Array.isArray(resultsResponse.body.improvements)).toBe(true);
+    expect(Array.isArray(resultsResponse.body.followUpPlan)).toBe(true);
+
+    const historyResponse = await request(app.getHttpServer())
+      .get('/api/v1/interviews/sessions')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(Array.isArray(historyResponse.body)).toBe(true);
+    expect(historyResponse.body).toHaveLength(1);
+    expect(historyResponse.body[0]).toMatchObject({
+      id: sessionId,
+      answeredCount: 1,
+    });
+  });
+
+  it('/api/v1/interviews/sessions/:id enforces ownership for history and results', async () => {
+    const ownerRegisterResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Interview Owner',
+        email: 'interview-owner@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const viewerRegisterResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        fullName: 'Interview Viewer',
+        email: 'interview-viewer@interviewcoach.dev',
+        password: 'Password@123',
+      })
+      .expect(201);
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/v1/interviews/sessions')
+      .set('Authorization', `Bearer ${ownerRegisterResponse.body.accessToken}`)
+      .send({
+        focusArea: 'distributed systems',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get(`/api/v1/interviews/sessions/${createResponse.body.id}`)
+      .set('Authorization', `Bearer ${viewerRegisterResponse.body.accessToken}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get(`/api/v1/interviews/sessions/${createResponse.body.id}/results`)
       .set('Authorization', `Bearer ${viewerRegisterResponse.body.accessToken}`)
       .expect(404);
   });
