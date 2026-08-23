@@ -14,6 +14,10 @@
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "db:migrate:deploy": "pnpm --filter backend prisma:deploy",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f --tail=150",
     "prepare": "husky"
   },
   "devDependencies": {

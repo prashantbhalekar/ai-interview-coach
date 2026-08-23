@@ -94,8 +94,8 @@ Status legend:
 
 | ID   | Requirement                                       | BRD Section | Planned Phase | Target Artifacts                | Verification                  | Status      |
 | ---- | ------------------------------------------------- | ----------- | ------------- | ------------------------------- | ----------------------------- | ----------- |
-| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | Pending     |
-| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | Pending     |
+| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | In Progress |
+| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | In Progress |
 | J-03 | Standard dev/build/lint/typecheck/test commands   | 19          | 1             | root scripts and turbo pipeline | command execution checks      | Done        |
 | J-04 | App-specific run commands by filter               | 19          | 1             | package scripts                 | app startup checks            | Done        |
 | J-05 | .env.example with no real secrets                 | 19, 20, 32  | 1, 10         | env templates                   | secret scan and review        | In Progress |
@@ -323,3 +323,29 @@ Status legend:
    - backend lint: pass
    - worker lint: pass
    - backend test:e2e: pass (27 tests)
+
+## X. Phase 9 Docker and Deployment Kickoff Evidence Updates
+
+1. Local Docker infrastructure scaffolding added:
+   - Root `docker-compose.yml` includes PostgreSQL 16, Redis 7, backend, worker, and frontend services.
+   - Added Dockerfiles for backend, worker, and frontend under `docker/`.
+   - Added root docker helper scripts in `package.json` for build/up/down/logs.
+2. Deployment path documentation started:
+   - Added `docs/phase-9/docker-local-infra.md` runbook.
+   - Added `docs/phase-9/frontend-cloudflare-deployment-path.md` to document Cloudflare Worker frontend path and explicit no-Pages constraint.
+   - Added `docs/phase-9/backend-runtime-compatibility-report.md` as active evidence tracker for backend target decision.
+3. Phase 9 status update:
+   - J-01 moved from Pending to In Progress.
+   - J-02 moved from Pending to In Progress.
+
+## Y. Phase 9 Runtime Validation Evidence Updates
+
+1. Compose runtime validation executed with temporary host-port overrides due an existing host conflict on default PostgreSQL/Redis ports:
+   - Command shape used: `POSTGRES_HOST_PORT=55433 REDIS_HOST_PORT=56380 docker-compose up -d --build`.
+   - All services reached running state: backend, frontend, worker, postgres, redis.
+2. Health and route checks from host passed:
+   - `GET http://localhost:3001/api/v1/health` returned HTTP 200 and `{ success: true, status: "ok" }` payload.
+   - `GET http://localhost:3000/interview-coach` returned HTTP 200.
+3. Port binding policy status:
+   - Compose defaults still remain aligned with BRD local-dev target (`5433`, `6380`).
+   - Override variables are documented for machines where these ports are already occupied.

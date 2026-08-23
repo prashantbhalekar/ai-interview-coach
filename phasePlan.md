@@ -257,3 +257,5 @@ Exit Gates:
 16. Phase 8 queue and worker integration has started: AI resume-analysis now enqueues embedding-processing jobs for resume and job-description content, and the worker now consumes embedding jobs to upsert embedding documents and register chunk records for downstream vector generation.
 17. Phase 8 is complete and exit gate is satisfied: incremental RAG path is enabled without major refactors through schema seams, queue orchestration, worker document/chunk persistence, and validated cost controls.
 18. Phase 9 is now the active next stage.
+19. Phase 9 has started with baseline delivery artifacts: root docker-compose stack, backend/worker/frontend Dockerfiles, root docker lifecycle scripts, and initial deployment runbooks for Cloudflare frontend path and backend runtime compatibility evidence.
+20. Phase 9 runtime validation has started: Docker stack builds and runs with healthy core services and passing local frontend/backend checks; host-port override path is documented for environments where default 5433/6380 are already allocated.

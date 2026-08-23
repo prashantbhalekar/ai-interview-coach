@@ -1,0 +1,100 @@
+name: ai-interview-coach
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ai_interview_coach
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '${POSTGRES_HOST_PORT:-5433}:5432'
+    volumes:
+      - aiic-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d ai_interview_coach']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '${REDIS_HOST_PORT:-6380}:6379'
+    volumes:
+      - aiic-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_interview_coach
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change_me_now
+      FRONTEND_URL: http://localhost:3000
+      AI_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: llama3.1:8b
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_BASE_PATH: .storage
+      AI_RATE_LIMIT_WINDOW_MS: 60000
+      AI_RATE_LIMIT_MAX_REQUESTS: 20
+      AI_RESUME_ANALYSIS_CACHE_TTL_MS: 120000
+      AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: 200
+    ports:
+      - '3001:3001'
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_interview_coach
+      REDIS_URL: redis://redis:6379
+      WORKER_CONCURRENCY: 5
+      EMBEDDING_CHUNK_TARGET_CHARS: 1200
+      EMBEDDING_CHUNK_OVERLAP_CHARS: 120
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api/v1
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api/v1
+      NEXT_PUBLIC_APP_BASE_PATH: /interview-coach
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+
+volumes:
+  aiic-postgres-data:
+  aiic-redis-data:

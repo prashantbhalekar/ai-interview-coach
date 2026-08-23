@@ -1,0 +1,14 @@
+.git
+.github
+.husky
+.turbo
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/*.log
+.env
+.env.*
+!.env.example
+pnpm-debug.log*
