@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { AiRateLimitGuard } from '../common/guards/ai-rate-limit.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AiService } from './ai.service';
 import { AnalyzeResumeDto } from './dto/analyze-resume.dto';
@@ -22,7 +23,7 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Post('resume-analysis')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiRateLimitGuard)
   async analyzeResume(
     @Req() request: AuthenticatedRequest,
     @Body() dto: AnalyzeResumeDto,

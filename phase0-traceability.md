@@ -11,10 +11,10 @@ Status legend:
 
 ## A. Product and Scope Requirements
 
-| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status  |
-| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ------- |
-| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Done    |
-| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Pending |
+| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status      |
+| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ----------- |
+| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Done        |
+| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | In Progress |
 
 ## B. Monorepo and Toolchain
 
@@ -57,13 +57,13 @@ Status legend:
 
 ## F. Resume, Storage, and Document Data
 
-| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status  |
-| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ------- |
-| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done    |
-| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Done    |
-| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done    |
-| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done    |
-| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Pending |
+| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status      |
+| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ----------- |
+| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done        |
+| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Done        |
+| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done        |
+| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done        |
+| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | In Progress |
 
 ## G. Database and Data Modeling
 
@@ -246,6 +246,25 @@ Status legend:
    - Applied migrations against local PostgreSQL at localhost:5433 for the active development database.
    - Verified non-interactively via prisma migrate deploy with "No pending migrations to apply."
 3. Validation evidence for this polish pass:
+   - frontend typecheck: pass
+   - frontend lint: pass
+   - frontend build: pass
+
+## U. Phase 8 Kickoff Evidence Updates
+
+1. pgvector-ready schema seams and migration scaffolding started:
+   - Added EmbeddingDocument and EmbeddingChunk models with source typing, chunk indexing, embedding status lifecycle fields, and vector placeholder column (`Float[]`) for future pgvector migration.
+   - Added migration folder and SQL for embedding enums, tables, indexes, and foreign keys.
+2. Embedding module scaffolding started:
+   - Added `src/embeddings/embeddings.module.ts` and `src/embeddings/embeddings.service.ts`.
+   - Added service methods for document upsert, chunk registration, and embedding success/failure status updates.
+3. Cost-control guardrails started for expensive AI path:
+   - Added configurable AI rate limiting guard (`AI_RATE_LIMIT_WINDOW_MS`, `AI_RATE_LIMIT_MAX_REQUESTS`) and applied it to `POST /api/v1/ai/resume-analysis`.
+   - Added short-lived resume analysis response caching (`AI_RESUME_ANALYSIS_CACHE_TTL_MS`, `AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES`) in AI service.
+4. Initial validation evidence for kickoff changes:
+   - backend typecheck: pass
+   - backend lint: pass
+   - backend test:e2e: pass
    - frontend typecheck: pass
    - frontend lint: pass
    - frontend build: pass

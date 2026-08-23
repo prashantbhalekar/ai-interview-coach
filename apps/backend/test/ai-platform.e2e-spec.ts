@@ -86,6 +86,70 @@ describe('AI Platform (phase 6)', () => {
     expect(successUsage.recordFailure).not.toHaveBeenCalled();
   });
 
+  it('caches identical resume analysis requests within TTL', async () => {
+    const usage = {
+      recordSuccess: jest.fn(async () => undefined),
+      recordFailure: jest.fn(async () => undefined),
+    } as unknown as AiUsageService;
+
+    const openAiProvider: AiProvider = {
+      name: 'openai',
+      generateStructuredOutput: jest.fn(async () => ({
+        provider: 'openai' as const,
+        model: 'gpt-4o-mini',
+        text: JSON.stringify({
+          overallScore: 81,
+          summary: 'Cached output should be reused for identical input.',
+          strengths: ['APIs'],
+          gaps: ['Distributed systems'],
+          recommendations: ['Add measurable scaling examples'],
+          keywordsMatched: ['Node.js'],
+          keywordsMissing: ['Caching'],
+        }),
+      })),
+    };
+
+    const service = new AiService(
+      new ConfigService({
+        AI_PROVIDER: 'openai',
+        OPENAI_MODEL: 'gpt-4o-mini',
+        AI_RESUME_ANALYSIS_CACHE_TTL_MS: 120000,
+        AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: 200,
+      }),
+      usage,
+      {
+        openai: openAiProvider,
+        ollama: {
+          name: 'ollama',
+          generateStructuredOutput: jest.fn(async () => {
+            throw new Error('Unexpected ollama execution in cache test');
+          }),
+        },
+        gemini: {
+          name: 'gemini',
+          generateStructuredOutput: jest.fn(async () => {
+            throw new Error('Unexpected gemini execution in cache test');
+          }),
+        },
+      },
+    );
+
+    const input = {
+      userId: 'cache-user',
+      resumeText: 'Built APIs and improved latency.',
+      jobDescription: 'Need backend engineer with Node.js and performance tuning.',
+    };
+
+    const firstResult = await service.analyzeResume(input);
+    const secondResult = await service.analyzeResume(input);
+
+    expect(firstResult.result.overallScore).toBe(81);
+    expect(secondResult.result.overallScore).toBe(81);
+    expect(openAiProvider.generateStructuredOutput).toHaveBeenCalledTimes(1);
+    expect(usage.recordSuccess).toHaveBeenCalledTimes(1);
+    expect(usage.recordFailure).not.toHaveBeenCalled();
+  });
+
   it('rejects malformed structured output and records failure', async () => {
     const usage = {
       recordSuccess: jest.fn(async () => undefined),

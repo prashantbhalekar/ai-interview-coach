@@ -17,6 +17,7 @@ model User {
   resumes      Resume[]
   aiUsages     AiUsage[]
   interviewSessions InterviewSession[]
+  embeddingDocuments EmbeddingDocument[]
 
   @@index([email])
 }
@@ -43,6 +44,19 @@ enum ResumeProcessingStatus {
 enum InterviewSessionStatus {
   ACTIVE
   COMPLETED
+}
+
+enum EmbeddingSourceType {
+  RESUME
+  JOB_DESCRIPTION
+  INTERVIEW_ANSWER
+}
+
+enum EmbeddingStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
 }
 
 model Resume {
@@ -146,4 +160,41 @@ model InterviewEvaluation {
   followUpPlan String[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+}
+
+model EmbeddingDocument {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceType  EmbeddingSourceType
+  sourceRefId String
+  contentHash String
+  metadata    Json?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  chunks      EmbeddingChunk[]
+
+  @@unique([userId, sourceType, sourceRefId])
+  @@index([userId, sourceType])
+  @@index([updatedAt])
+}
+
+model EmbeddingChunk {
+  id                  String            @id @default(cuid())
+  documentId          String
+  document            EmbeddingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex          Int
+  content             String
+  tokenCount          Int?
+  embeddingStatus     EmbeddingStatus   @default(PENDING)
+  embeddingModel      String?
+  embeddingDimensions Int?
+  embeddingVector     Float[]           @default([])
+  failureReason       String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([documentId, chunkIndex])
+  @@index([embeddingStatus])
+  @@index([updatedAt])
 }

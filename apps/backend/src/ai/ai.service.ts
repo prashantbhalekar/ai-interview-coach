@@ -4,6 +4,7 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { ZodError, ZodSchema } from 'zod';
 import { AI_PROVIDER_REGISTRY } from './ai.constants';
@@ -32,8 +33,15 @@ interface AnalyzeResumeOutput {
   result: ResumeAnalysisResult;
 }
 
+interface CacheEntry {
+  value: AnalyzeResumeOutput;
+  expiresAt: number;
+}
+
 @Injectable()
 export class AiService {
+  private readonly resumeAnalysisCache = new Map<string, CacheEntry>();
+
   constructor(
     private readonly configService: ConfigService,
     private readonly aiUsageService: AiUsageService,
@@ -42,6 +50,12 @@ export class AiService {
   ) {}
 
   async analyzeResume(input: AnalyzeResumeInput): Promise<AnalyzeResumeOutput> {
+    const cacheKey = this.getResumeAnalysisCacheKey(input);
+    const cachedResponse = this.getCachedResumeAnalysis(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
     const provider = this.resolveProvider();
     const prompt = buildResumeAnalysisPrompt({
       resumeText: input.resumeText,
@@ -72,11 +86,15 @@ export class AiService {
         ...(providerResult.usage ? { usage: providerResult.usage } : {}),
       });
 
-      return {
+      const response = {
         provider: providerResult.provider,
         model: providerResult.model,
         result: parsed,
       };
+
+      this.cacheResumeAnalysis(cacheKey, response);
+
+      return response;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown AI failure';
       const fallbackModel = this.getConfiguredModel(provider.name);
@@ -149,5 +167,54 @@ export class AiService {
     }
 
     return this.configService.get<string>('OLLAMA_MODEL', 'llama3.1:8b');
+  }
+
+  private getResumeAnalysisCacheKey(input: AnalyzeResumeInput): string {
+    const normalized = {
+      userId: input.userId,
+      resumeText: input.resumeText.trim(),
+      jobDescription: input.jobDescription.trim(),
+    };
+
+    return createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
+  }
+
+  private getCachedResumeAnalysis(cacheKey: string): AnalyzeResumeOutput | null {
+    const ttlMs = this.configService.get<number>('AI_RESUME_ANALYSIS_CACHE_TTL_MS', 120000);
+    if (ttlMs <= 0) {
+      return null;
+    }
+
+    const cached = this.resumeAnalysisCache.get(cacheKey);
+    if (!cached) {
+      return null;
+    }
+
+    if (Date.now() > cached.expiresAt) {
+      this.resumeAnalysisCache.delete(cacheKey);
+      return null;
+    }
+
+    return cached.value;
+  }
+
+  private cacheResumeAnalysis(cacheKey: string, value: AnalyzeResumeOutput): void {
+    const ttlMs = this.configService.get<number>('AI_RESUME_ANALYSIS_CACHE_TTL_MS', 120000);
+    if (ttlMs <= 0) {
+      return;
+    }
+
+    const maxEntries = this.configService.get<number>('AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES', 200);
+    if (this.resumeAnalysisCache.size >= maxEntries) {
+      const oldestKey = this.resumeAnalysisCache.keys().next().value;
+      if (oldestKey) {
+        this.resumeAnalysisCache.delete(oldestKey);
+      }
+    }
+
+    this.resumeAnalysisCache.set(cacheKey, {
+      value,
+      expiresAt: Date.now() + ttlMs,
+    });
   }
 }
