@@ -18,6 +18,8 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f --tail=150",
+    "docker:bootstrap": "sh ./scripts/docker-bootstrap.sh",
+    "docker:bootstrap:seed": "BOOTSTRAP_SEED=true sh ./scripts/docker-bootstrap.sh",
     "prepare": "husky"
   },
   "devDependencies": {

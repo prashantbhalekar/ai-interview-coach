@@ -25,6 +25,12 @@ Phase 1 foundation scaffold for the AI Interview Coach monorepo.
 - pnpm docker:up
 - pnpm docker:logs
 - pnpm docker:down
+- pnpm docker:bootstrap
+- pnpm docker:bootstrap:seed
+
+## Day-1 Docker Cheat Sheet
+
+- DOCKER_DAY1_CHEATSHEET.md
 
 ## App-specific Commands
 
