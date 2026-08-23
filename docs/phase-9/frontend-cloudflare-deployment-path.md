@@ -39,3 +39,10 @@ pnpm --filter frontend build
 2. Login/register/dashboard flows work against `/api/v1` backend.
 3. Browser requests never target unversioned backend endpoints.
 4. No deployment path references Cloudflare Pages.
+
+## Phase 9 Validation Evidence
+
+1. Next production build confirms route map includes product paths under `/interview-coach/*`.
+2. Local Docker validation confirms `/interview-coach` is reachable with HTTP 200 on production-style frontend runtime.
+3. API client default base URL remains versioned (`/api/v1`) and is externally configurable via `NEXT_PUBLIC_API_BASE_URL`.
+4. Deployment documentation and architecture artifacts include explicit exclusion of Cloudflare Pages.

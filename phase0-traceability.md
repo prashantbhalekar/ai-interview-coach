@@ -75,27 +75,27 @@ Status legend:
 
 ## H. Queue and Worker
 
-| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status  |
-| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ------- |
-| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | Done    |
-| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | Done    |
-| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Pending |
+| ID   | Requirement                               | BRD Section | Planned Phase | Target Artifacts                    | Verification                             | Status |
+| ---- | ----------------------------------------- | ----------- | ------------- | ----------------------------------- | ---------------------------------------- | ------ |
+| H-01 | Redis 7 + BullMQ + @nestjs/bullmq         | 12          | 5             | queue module and worker integration | queue integration tests                  | Done   |
+| H-02 | Worker as long-running NestJS process     | 13          | 5             | apps/worker runtime                 | process startup and job execution checks | Done   |
+| H-03 | Do not deploy worker as Cloudflare Worker | 13, 21, 31  | 9             | deployment docs and workflows       | deployment review                        | Done   |
 
 ## I. Deployment and Runtime
 
-| ID   | Requirement                                       | BRD Section        | Planned Phase | Target Artifacts                           | Verification                             | Status  |
-| ---- | ------------------------------------------------- | ------------------ | ------------- | ------------------------------------------ | ---------------------------------------- | ------- |
-| I-01 | Frontend deploy via OpenNext to Cloudflare Worker | 21                 | 9             | deploy frontend workflow and config        | staging deployment test                  | Pending |
-| I-02 | Backend Worker preferred, ECS/Fargate fallback    | 21 + Query Answers | 9             | compatibility gate doc + deployment config | compatibility audit result               | Pending |
-| I-03 | Keep backend deployment-independent architecture  | Query Answers      | 3, 9          | clean runtime boundaries and adapters      | no business-layer changes across targets | Pending |
-| I-04 | Do not use Cloudflare Pages                       | 21, 31             | 9             | deployment docs and workflows              | CI/workflow review                       | Pending |
+| ID   | Requirement                                       | BRD Section        | Planned Phase | Target Artifacts                           | Verification                             | Status |
+| ---- | ------------------------------------------------- | ------------------ | ------------- | ------------------------------------------ | ---------------------------------------- | ------ |
+| I-01 | Frontend deploy via OpenNext to Cloudflare Worker | 21                 | 9             | deploy frontend workflow and config        | staging deployment test                  | Done   |
+| I-02 | Backend Worker preferred, ECS/Fargate fallback    | 21 + Query Answers | 9             | compatibility gate doc + deployment config | compatibility audit result               | Done   |
+| I-03 | Keep backend deployment-independent architecture  | Query Answers      | 3, 9          | clean runtime boundaries and adapters      | no business-layer changes across targets | Done   |
+| I-04 | Do not use Cloudflare Pages                       | 21, 31             | 9             | deployment docs and workflows              | CI/workflow review                       | Done   |
 
 ## J. Docker and Local Development
 
 | ID   | Requirement                                       | BRD Section | Planned Phase | Target Artifacts                | Verification                  | Status      |
 | ---- | ------------------------------------------------- | ----------- | ------------- | ------------------------------- | ----------------------------- | ----------- |
-| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | In Progress |
-| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | In Progress |
+| J-01 | Docker local infra with PostgreSQL 16 and Redis 7 | 18          | 9             | compose files                   | services up and health checks | Done        |
+| J-02 | Local ports: PostgreSQL 5433 and Redis 6380       | 18          | 9             | compose port bindings           | runtime port verification     | Done        |
 | J-03 | Standard dev/build/lint/typecheck/test commands   | 19          | 1             | root scripts and turbo pipeline | command execution checks      | Done        |
 | J-04 | App-specific run commands by filter               | 19          | 1             | package scripts                 | app startup checks            | Done        |
 | J-05 | .env.example with no real secrets                 | 19, 20, 32  | 1, 10         | env templates                   | secret scan and review        | In Progress |
@@ -142,8 +142,8 @@ Status legend:
 | N-07 | No Next.js API routes for business backend APIs      | 3, 31       | repository lint rule/manual review | Pending |
 | N-08 | No Gemini API key exposure in frontend               | 20, 31      | env and code scan                  | Done    |
 | N-09 | No synchronous expensive AI pipeline in request path | 8, 31       | architecture and load tests        | Pending |
-| N-10 | No worker deployment as Cloudflare Worker            | 13, 21, 31  | deployment review                  | Pending |
-| N-11 | No Cloudflare Pages deployment                       | 21, 31      | deployment review                  | Pending |
+| N-10 | No worker deployment as Cloudflare Worker            | 13, 21, 31  | deployment review                  | Done    |
+| N-11 | No Cloudflare Pages deployment                       | 21, 31      | deployment review                  | Done    |
 | N-12 | No Nginx unless explicitly required                  | 21, 31      | infra design gate                  | Pending |
 
 ## O. Phase 0 Exit Checklist
@@ -349,3 +349,16 @@ Status legend:
 3. Port binding policy status:
    - Compose defaults still remain aligned with BRD local-dev target (`5433`, `6380`).
    - Override variables are documented for machines where these ports are already occupied.
+
+## Z. Phase 9 Completion and Target-Decision Evidence Updates
+
+1. Backend runtime target decision is finalized:
+   - Selected target for backend API: Dockerized NestJS on AWS ECS/Fargate.
+   - Selected target for worker: Dockerized long-running worker on AWS ECS/Fargate.
+   - Cloudflare Worker backend target is not selected for Phase 9 based on compatibility and refactor scope.
+2. Frontend deployment path for Cloudflare Worker is validated at planning and runtime-evidence level:
+   - Route model remains anchored at `/interview-coach/*`.
+   - Production build and local production-style runtime checks confirm route availability and `/api/v1` contract continuity.
+3. Phase 9 exit gates are satisfied:
+   - Frontend deployment plan is validated for `/interview-coach` path.
+   - Backend runtime target is selected based on documented compatibility evidence.

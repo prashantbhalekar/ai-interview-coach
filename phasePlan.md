@@ -259,3 +259,5 @@ Exit Gates:
 18. Phase 9 is now the active next stage.
 19. Phase 9 has started with baseline delivery artifacts: root docker-compose stack, backend/worker/frontend Dockerfiles, root docker lifecycle scripts, and initial deployment runbooks for Cloudflare frontend path and backend runtime compatibility evidence.
 20. Phase 9 runtime validation has started: Docker stack builds and runs with healthy core services and passing local frontend/backend checks; host-port override path is documented for environments where default 5433/6380 are already allocated.
+21. Phase 9 is complete and exit gates are satisfied: frontend Cloudflare deployment path is validated for `/interview-coach`, local Docker infrastructure and app containerization are verified, and backend runtime target is formally selected as Dockerized NestJS/worker on AWS ECS/Fargate based on compatibility evidence.
+22. Phase 10 is now the active next stage.
