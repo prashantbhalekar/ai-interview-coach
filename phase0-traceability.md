@@ -11,10 +11,10 @@ Status legend:
 
 ## A. Product and Scope Requirements
 
-| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status      |
-| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ----------- |
-| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Done        |
-| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | In Progress |
+| ID   | Requirement                                               | BRD Section | Planned Phase | Target Artifacts                                   | Verification                                    | Status |
+| ---- | --------------------------------------------------------- | ----------- | ------------- | -------------------------------------------------- | ----------------------------------------------- | ------ |
+| A-01 | AI interview preparation platform with MVP-first strategy | 1           | 7             | Frontend flows, backend modules, worker processors | End-to-end scenario tests for milestone A and B | Done   |
+| A-02 | Architecture supports incremental advanced AI features    | 1           | 6, 8          | AI abstraction, embeddings/vector seams            | No core refactor required to add embeddings     | Done   |
 
 ## B. Monorepo and Toolchain
 
@@ -57,21 +57,21 @@ Status legend:
 
 ## F. Resume, Storage, and Document Data
 
-| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status      |
-| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ----------- |
-| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done        |
-| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Done        |
-| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done        |
-| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done        |
-| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | In Progress |
+| ID   | Requirement                                      | BRD Section | Planned Phase | Target Artifacts                     | Verification                                | Status |
+| ---- | ------------------------------------------------ | ----------- | ------------- | ------------------------------------ | ------------------------------------------- | ------ |
+| F-01 | Resume upload supports PDF initially             | 8           | 4             | upload controller/service validation | file type tests                             | Done   |
+| F-02 | Async workflow for processing, non-blocking HTTP | 8, 12       | 4, 5          | enqueue logic and status model       | async processing tests                      | Done   |
+| F-03 | Object storage abstraction and R2 provider       | 9           | 4             | storage interface + r2 provider      | integration tests with provider mocks/stubs | Done   |
+| F-04 | Do not store PDF binary in PostgreSQL            | 9, 31       | 4             | metadata-only persistence            | DB schema and repository checks             | Done   |
+| F-05 | Document/Chunk schema prepared for embeddings    | 10, 11      | 8             | Prisma schema evolution              | migration validation                        | Done   |
 
 ## G. Database and Data Modeling
 
-| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status      |
-| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ----------- |
-| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Done        |
-| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | In Progress |
-| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending     |
+| ID   | Requirement                                 | BRD Section | Planned Phase | Target Artifacts                  | Verification                        | Status  |
+| ---- | ------------------------------------------- | ----------- | ------------- | --------------------------------- | ----------------------------------- | ------- |
+| G-01 | PostgreSQL + Prisma migrations              | 10          | 3             | prisma schema, migrations         | migration and seed command success  | Done    |
+| G-02 | Initial entities for MVP and evolution path | 10          | 3, 8          | core models + future-ready models | CRUD and relational integrity tests | Done    |
+| G-03 | Indexes and foreign keys where appropriate  | 10          | 3             | schema indexes and relations      | query plan and integration tests    | Pending |
 
 ## H. Queue and Worker
 
@@ -287,3 +287,39 @@ Status legend:
    - ECS/Fargate is default fallback if any critical compatibility check fails
    - Backend architecture remains unchanged; only runtime/deployment target changes
    - BullMQ worker remains a long-running container process, not a Cloudflare Worker
+
+## V. Phase 8 Queue/Worker Integration Evidence Updates
+
+1. Embedding queue orchestration integrated into backend:
+   - Added dedicated embedding queue service under `src/queue/embedding-queue.service.ts` with retry/backoff and deterministic job ids.
+   - Registered embedding queue service in queue module exports for feature-module reuse.
+   - `POST /api/v1/ai/resume-analysis` now enqueues embedding-processing jobs for both resume content and job-description content after analysis response generation.
+2. Worker embedding processing path integrated:
+   - Added `embedding-processing` consumer in worker queue runtime.
+   - Added processor scaffold that upserts embedding documents, clears stale chunks, and creates normalized chunk rows with pending embedding status.
+   - Added configurable chunking controls via worker env keys (`EMBEDDING_CHUNK_TARGET_CHARS`, `EMBEDDING_CHUNK_OVERLAP_CHARS`).
+3. Validation evidence for this continuation pass:
+   - backend typecheck: pass
+   - worker typecheck: pass
+   - backend lint: pass
+   - worker lint: pass
+   - backend test:e2e: pass (25 tests)
+
+## W. Phase 8 Completion Evidence Updates
+
+1. Phase 8 deliverables are complete:
+   - pgvector-ready schema seams completed via EmbeddingDocument/EmbeddingChunk models and migration.
+   - Embedding/vector module scaffolding completed with backend service methods and queue-driven worker ingestion path.
+   - Expensive endpoint rate limiting completed for `POST /api/v1/ai/resume-analysis`.
+   - Optional caching completed for repeat resume analysis requests.
+2. Incremental RAG exit gate is satisfied without major refactors:
+   - Resume analysis flow now emits embedding jobs.
+   - Worker persists document/chunk records that can be incrementally upgraded to true vector generation and retrieval.
+3. Additional test coverage added for Phase 8 queue path:
+   - New e2e-oriented controller tests validate embedding enqueue behavior and graceful queue-failure handling.
+4. Validation evidence after completion updates:
+   - backend typecheck: pass
+   - worker typecheck: pass
+   - backend lint: pass
+   - worker lint: pass
+   - backend test:e2e: pass (27 tests)

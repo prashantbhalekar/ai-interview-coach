@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AiRateLimitGuard } from '../common/guards/ai-rate-limit.guard';
 import { PrismaModule } from '../prisma/prisma.module';
+import { QueueModule } from '../queue/queue.module';
 import { AI_PROVIDER_REGISTRY } from './ai.constants';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
@@ -11,7 +12,7 @@ import { OllamaProvider } from './providers/ollama.provider';
 import { OpenAiProvider } from './providers/openai.provider';
 
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule, PrismaModule, QueueModule],
   controllers: [AiController],
   providers: [
     AiService,

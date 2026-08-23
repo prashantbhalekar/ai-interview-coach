@@ -1,6 +1,11 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { ResumeProcessingStatus } from '@prisma/client';
+import {
+  EmbeddingSourceType,
+  EmbeddingStatus,
+  Prisma,
+  type ResumeProcessingStatus,
+} from '@prisma/client';
 import { Job, Worker } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -20,10 +25,19 @@ interface InterviewProcessingJobPayload {
   userId: string;
 }
 
+interface EmbeddingProcessingJobPayload {
+  userId: string;
+  sourceType: EmbeddingSourceType;
+  sourceRefId: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+}
+
 const queueNames = {
   resumeProcessing: 'resume-processing',
   analysisProcessing: 'analysis-processing',
   interviewProcessing: 'interview-processing',
+  embeddingProcessing: 'embedding-processing',
 } as const;
 
 @Injectable()
@@ -66,6 +80,17 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
       new Worker<InterviewProcessingJobPayload>(
         queueNames.interviewProcessing,
         async (job) => this.processInterviewJob(job),
+        {
+          connection: { url: redisUrl },
+          concurrency,
+        },
+      ),
+    );
+
+    this.workers.push(
+      new Worker<EmbeddingProcessingJobPayload>(
+        queueNames.embeddingProcessing,
+        async (job) => this.processEmbeddingJob(job),
         {
           connection: { url: redisUrl },
           concurrency,
@@ -124,6 +149,95 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(
       `Interview job received interviewSessionId=${job.data.interviewSessionId} userId=${job.data.userId} (processor scaffold)`,
     );
+  }
+
+  private async processEmbeddingJob(job: Job<EmbeddingProcessingJobPayload>): Promise<void> {
+    const normalizedContent = job.data.content.trim();
+    if (!normalizedContent) {
+      this.logger.warn(
+        `Embedding job skipped sourceType=${job.data.sourceType} sourceRefId=${job.data.sourceRefId} due to empty content`,
+      );
+      return;
+    }
+
+    const metadata = job.data.metadata ? (job.data.metadata as Prisma.InputJsonValue) : undefined;
+
+    const document = await this.prisma.embeddingDocument.upsert({
+      where: {
+        userId_sourceType_sourceRefId: {
+          userId: job.data.userId,
+          sourceType: job.data.sourceType,
+          sourceRefId: job.data.sourceRefId,
+        },
+      },
+      update: {
+        ...(metadata ? { metadata } : {}),
+      },
+      create: {
+        userId: job.data.userId,
+        sourceType: job.data.sourceType,
+        sourceRefId: job.data.sourceRefId,
+        contentHash: job.data.sourceRefId,
+        ...(metadata ? { metadata } : {}),
+      },
+    });
+
+    await this.prisma.embeddingChunk.deleteMany({
+      where: {
+        documentId: document.id,
+      },
+    });
+
+    const chunks = this.splitContentToChunks(normalizedContent);
+
+    if (chunks.length === 0) {
+      this.logger.warn(`Embedding job produced zero chunks for document=${document.id}`);
+      return;
+    }
+
+    await this.prisma.embeddingChunk.createMany({
+      data: chunks.map((content, chunkIndex) => ({
+        documentId: document.id,
+        chunkIndex,
+        content,
+        tokenCount: null,
+        embeddingStatus: EmbeddingStatus.PENDING,
+        embeddingModel: null,
+        embeddingDimensions: null,
+        embeddingVector: [],
+      })),
+    });
+
+    this.logger.log(
+      `Embedding job prepared document=${document.id} chunks=${chunks.length} sourceType=${job.data.sourceType}`,
+    );
+  }
+
+  private splitContentToChunks(content: string): string[] {
+    const targetChars = this.configService.get<number>('EMBEDDING_CHUNK_TARGET_CHARS', 1200);
+    const overlapChars = this.configService.get<number>('EMBEDDING_CHUNK_OVERLAP_CHARS', 120);
+    const safeTarget = Math.max(300, targetChars);
+    const safeOverlap = Math.max(0, Math.min(overlapChars, safeTarget - 100));
+
+    const chunks: string[] = [];
+    let start = 0;
+
+    while (start < content.length) {
+      const end = Math.min(content.length, start + safeTarget);
+      const candidate = content.slice(start, end).trim();
+
+      if (candidate.length > 0) {
+        chunks.push(candidate);
+      }
+
+      if (end >= content.length) {
+        break;
+      }
+
+      start = Math.max(end - safeOverlap, start + 1);
+    }
+
+    return chunks;
   }
 
   private async updateResumeStatus(

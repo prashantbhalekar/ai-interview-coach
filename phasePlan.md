@@ -254,3 +254,6 @@ Exit Gates:
 13. Phase 7 is complete and exit gates are satisfied: MVP screens/endpoints are functional and acceptance checks are validated through backend/frontend typecheck, lint, e2e, and production build evidence.
 14. Phase 8 is now the active next stage (RAG-ready schema seams, embeddings scaffolding, and cost controls).
 15. Phase 8 implementation has started with initial backend foundations: pgvector-ready embedding document/chunk schema seams plus migration, embeddings module/service scaffolding, configurable AI rate limiting guard for expensive analysis endpoint, and short-lived resume analysis response caching to reduce repeated provider calls.
+16. Phase 8 queue and worker integration has started: AI resume-analysis now enqueues embedding-processing jobs for resume and job-description content, and the worker now consumes embedding jobs to upsert embedding documents and register chunk records for downstream vector generation.
+17. Phase 8 is complete and exit gate is satisfied: incremental RAG path is enabled without major refactors through schema seams, queue orchestration, worker document/chunk persistence, and validated cost controls.
+18. Phase 9 is now the active next stage.
