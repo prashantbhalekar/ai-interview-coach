@@ -176,7 +176,7 @@ export default function AnalysisPage() {
         {state === 'empty' ? (
           <EmptyState
             title="No complete context found"
-            message="Upload a resume and save both resume text and job description before generating analysis."
+            message="Upload a resume, add a job description, and provide resume text (at least 120 chars) before generating analysis. You can add resume text in Resume step 1 or by updating saved context."
             action={
               <Link href={routes.resume} className="btn btn-secondary">
                 Complete Resume Context

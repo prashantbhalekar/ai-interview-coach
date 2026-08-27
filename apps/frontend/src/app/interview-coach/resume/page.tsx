@@ -141,12 +141,6 @@ export default function ResumePage() {
       return;
     }
 
-    if (resumeText.trim().length < 120) {
-      setJobErrorMessage('Add resume text (at least 120 characters) to run structured analysis.');
-      setJobStatus('error');
-      return;
-    }
-
     let existing: Partial<PersistedResumeContext> = {};
     const existingRaw = localStorage.getItem(STORAGE_KEY);
     if (existingRaw) {
@@ -198,7 +192,7 @@ export default function ResumePage() {
                 Resume Text
                 <textarea
                   className="textarea"
-                  placeholder="Paste resume text so AI can run structured analysis while PDF parsing jobs mature in the worker flow..."
+                  placeholder="Optional for this step: paste resume text now, or add it later on Analysis to run structured scoring..."
                   value={resumeText}
                   onChange={(event) => setResumeText(event.target.value)}
                 />

@@ -1,4 +1,10 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ApiClientError, apiRequest } from '@/lib/api-client';
+import type { AuthUser } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
 
 const navItems = [
@@ -9,11 +15,75 @@ const navItems = [
 ];
 
 export function SiteNav() {
+  const router = useRouter();
+  const [status, setStatus] = useState<'loading' | 'guest' | 'authenticated'>('loading');
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('aiic.accessToken');
+    if (!token) {
+      setStatus('guest');
+      setUser(null);
+      return;
+    }
+
+    const authToken: string = token;
+
+    async function loadUser(): Promise<void> {
+      try {
+        const me = await apiRequest<AuthUser>('/users/me', {
+          token: authToken,
+        });
+        setUser(me);
+        setStatus('authenticated');
+      } catch (error: unknown) {
+        if (error instanceof ApiClientError && error.status === 401) {
+          localStorage.removeItem('aiic.accessToken');
+        }
+        setStatus('guest');
+        setUser(null);
+      }
+    }
+
+    void loadUser();
+  }, []);
+
+  const initials = useMemo(() => {
+    if (!user?.fullName) {
+      return 'PB';
+    }
+
+    const words = user.fullName.trim().split(/\s+/).filter(Boolean);
+    const first = words[0]?.[0] ?? '';
+    const second = words.length > 1 ? (words[1]?.[0] ?? '') : '';
+    return `${first}${second}`.toUpperCase() || 'PB';
+  }, [user]);
+
+  async function handleLogout(): Promise<void> {
+    const token = localStorage.getItem('aiic.accessToken');
+
+    if (token) {
+      try {
+        await apiRequest<{ success: boolean; message: string }>('/auth/logout', {
+          method: 'POST',
+          token,
+        });
+      } catch {
+        // Logout is client-authoritative for JWT cleanup in this MVP.
+      }
+    }
+
+    localStorage.removeItem('aiic.accessToken');
+    setUser(null);
+    setStatus('guest');
+    router.push(routes.coach);
+  }
+
   return (
     <header className="site-nav-wrap">
       <nav className="site-nav container glass">
         <Link href={routes.home} className="brand" aria-label="Go to Engineering Lab home">
-          PB
+          {status === 'authenticated' ? initials : 'PB'}
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (
@@ -23,12 +93,25 @@ export function SiteNav() {
           ))}
         </div>
         <div className="nav-actions">
-          <Link href={routes.login} className="nav-link quiet-link">
-            Log in
-          </Link>
-          <Link href={routes.register} className="btn btn-primary nav-cta">
-            Get Started
-          </Link>
+          {status === 'authenticated' ? (
+            <>
+              <Link href={routes.dashboard} className="nav-link quiet-link">
+                Dashboard
+              </Link>
+              <button type="button" className="btn btn-secondary nav-cta" onClick={handleLogout}>
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href={routes.login} className="nav-link quiet-link">
+                Log in
+              </Link>
+              <Link href={routes.register} className="btn btn-primary nav-cta">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </header>

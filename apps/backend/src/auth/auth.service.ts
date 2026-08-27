@@ -74,4 +74,11 @@ export class AuthService {
       },
     };
   }
+
+  logout(): { success: boolean; message: string } {
+    return {
+      success: true,
+      message: 'Logged out successfully',
+    };
+  }
 }
