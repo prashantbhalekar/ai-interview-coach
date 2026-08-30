@@ -1289,6 +1289,160 @@ p {
   gap: 0.2rem;
 }
 
+.chip-button {
+  cursor: pointer;
+  background: rgba(86, 212, 255, 0.1);
+}
+
+.chip-button:hover {
+  border-color: rgba(86, 212, 255, 0.52);
+  color: #d4f8ff;
+}
+
+.interview-start-card {
+  max-width: 48rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  border: 1px solid rgba(196, 214, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-soft);
+  padding: 0.34rem 0.74rem;
+  cursor: pointer;
+}
+
+.filter-pill-active {
+  color: #eef5ff;
+  border-color: rgba(124, 152, 255, 0.5);
+  background: rgba(124, 152, 255, 0.14);
+}
+
+.interview-session-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.interview-session-card {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.interview-session-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.interview-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.interview-score-row strong {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 1.25rem;
+}
+
+.interview-reading-shell {
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+.interview-progress-head {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.interview-progress-bar {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.interview-question-block {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid rgba(196, 214, 255, 0.14);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.014);
+}
+
+.interview-question-text {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.32;
+}
+
+.interview-answer-textarea {
+  min-height: 14rem;
+  padding: 0.9rem;
+  line-height: 1.55;
+}
+
+.interview-complete-hero {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.interview-final-score strong {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 1.6rem;
+}
+
+.question-review-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.question-review-item {
+  border: 1px solid rgba(196, 214, 255, 0.14);
+  border-radius: calc(var(--radius) - 3px);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.question-review-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.8rem;
+  cursor: pointer;
+}
+
+.question-review-index {
+  color: var(--text-soft);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.82rem;
+}
+
+.question-review-title {
+  color: var(--text);
+}
+
+.question-review-score {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.question-review-body {
+  border-top: 1px solid rgba(196, 214, 255, 0.12);
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
 .scroll-target {
   scroll-margin-top: 6.6rem;
 }
@@ -1350,6 +1504,10 @@ p {
   }
 
   .analysis-two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .interview-session-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

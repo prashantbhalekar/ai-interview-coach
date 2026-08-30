@@ -2,16 +2,27 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { InterviewSessionCard } from '@/components/interview/interview-session-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FeedbackState } from '@/components/ui/feedback-state';
 import { LoadingState } from '@/components/ui/loading-state';
+import { PageContainer } from '@/components/ui/page-container';
+import { SectionHeading } from '@/components/ui/section-heading';
 import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { CreateInterviewSessionRequest, InterviewSessionSummary } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
+
+const FALLBACK_FOCUS_SUGGESTIONS = [
+  'Backend Engineering',
+  'System Design',
+  'APIs',
+  'Databases',
+  'Microservices',
+] as const;
 
 export default function InterviewsPage() {
   const router = useRouter();
@@ -19,9 +30,38 @@ export default function InterviewsPage() {
     'loading',
   );
   const [createStatus, setCreateStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [filter, setFilter] = useState<'all' | 'in-progress' | 'completed'>('all');
   const [errorMessage, setErrorMessage] = useState('Unable to load sessions.');
   const [focusArea, setFocusArea] = useState('backend engineering');
   const [sessions, setSessions] = useState<InterviewSessionSummary[]>([]);
+
+  const suggestedFocusAreas = useMemo(() => {
+    const dynamic = Array.from(
+      new Set(
+        sessions
+          .map((session) => session.focusArea?.trim())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    if (dynamic.length > 0) {
+      return dynamic.slice(0, 6);
+    }
+
+    return [...FALLBACK_FOCUS_SUGGESTIONS];
+  }, [sessions]);
+
+  const filteredSessions = useMemo(() => {
+    if (filter === 'all') {
+      return sessions;
+    }
+
+    if (filter === 'completed') {
+      return sessions.filter((session) => session.status === 'COMPLETED');
+    }
+
+    return sessions.filter((session) => session.status !== 'COMPLETED');
+  }, [filter, sessions]);
 
   async function loadSessions(token: string): Promise<void> {
     try {
@@ -37,9 +77,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      if (error instanceof ApiClientError) {
-        setErrorMessage(error.message);
-      }
+      setErrorMessage("Couldn't load your interviews.");
       setStatus('error');
     }
   }
@@ -65,12 +103,12 @@ export default function InterviewsPage() {
     const normalizedFocusArea = focusArea.trim();
     if (!normalizedFocusArea) {
       setCreateStatus('error');
-      setErrorMessage('Please add a focus area before starting a session.');
+      setErrorMessage('Please add a focus area before starting.');
       return;
     }
 
     setCreateStatus('loading');
-    setErrorMessage('Unable to load sessions.');
+    setErrorMessage("Couldn't load your interviews.");
 
     try {
       const payload: CreateInterviewSessionRequest = {
@@ -94,27 +132,42 @@ export default function InterviewsPage() {
         return;
       }
 
-      if (error instanceof ApiClientError) {
-        setErrorMessage(error.message);
-      }
+      setErrorMessage("Couldn't start the interview.");
       setCreateStatus('error');
     }
   }
 
   return (
     <AppShell>
-      <section className="stack">
-        <div>
-          <h1 className="page-title">Interview Sessions</h1>
-          <p className="page-subtitle">
-            Start sessions, continue Q&A, and review evaluation history.
-          </p>
-        </div>
+      <PageContainer>
+        <SectionHeading
+          title="Interview Practice"
+          subtitle="Practice tailored questions, review your performance, and track your progress."
+        />
 
-        <Card title="Start New Session" eyebrow="Milestone B">
+        <Card
+          title="Start a New Interview"
+          eyebrow="Configuration"
+          className="interview-start-card"
+        >
           <div className="form-grid">
-            <label>
-              Focus Area
+            <p className="muted">Choose what you'd like to focus on for this practice session.</p>
+
+            <div className="chip-row">
+              {suggestedFocusAreas.map((focus) => (
+                <button
+                  key={focus}
+                  type="button"
+                  className="chip chip-button"
+                  onClick={() => setFocusArea(focus)}
+                >
+                  {focus}
+                </button>
+              ))}
+            </div>
+
+            <label className="form-grid">
+              <span>Focus Area</span>
               <input
                 className="input"
                 value={focusArea}
@@ -122,6 +175,9 @@ export default function InterviewsPage() {
                 maxLength={100}
               />
             </label>
+
+            <p className="muted">Personalized using your resume and target role.</p>
+
             {createStatus === 'error' ? (
               <FeedbackState
                 variant="error"
@@ -129,16 +185,17 @@ export default function InterviewsPage() {
                 message={errorMessage}
               />
             ) : null}
+
             <Button
               onClick={createSession}
               disabled={createStatus === 'loading' || status === 'unauthenticated'}
             >
-              {createStatus === 'loading' ? 'Creating...' : 'Start Interview Session'}
+              {createStatus === 'loading' ? 'Starting...' : 'Start Interview'}
             </Button>
           </div>
         </Card>
 
-        {status === 'loading' ? <LoadingState label="Loading your interview history..." /> : null}
+        {status === 'loading' ? <LoadingState label="Loading your interviews..." /> : null}
 
         {status === 'unauthenticated' ? (
           <EmptyState
@@ -156,37 +213,57 @@ export default function InterviewsPage() {
           <FeedbackState variant="error" title="History unavailable" message={errorMessage} />
         ) : null}
 
-        {status === 'ready' && sessions.length === 0 ? (
-          <EmptyState
-            title="No interview sessions yet"
-            message="Create your first session to begin the Q&A and evaluation loop."
-          />
-        ) : null}
+        {status === 'ready' ? (
+          <section className="stack">
+            <SectionHeading title="Your Interviews" />
+            <div className="filter-row" role="tablist" aria-label="Interview filter">
+              <button
+                type="button"
+                className={`filter-pill ${filter === 'all' ? 'filter-pill-active' : ''}`}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`filter-pill ${filter === 'in-progress' ? 'filter-pill-active' : ''}`}
+                onClick={() => setFilter('in-progress')}
+              >
+                In Progress
+              </button>
+              <button
+                type="button"
+                className={`filter-pill ${filter === 'completed' ? 'filter-pill-active' : ''}`}
+                onClick={() => setFilter('completed')}
+              >
+                Completed
+              </button>
+            </div>
 
-        <section className="section-grid">
-          {status === 'ready'
-            ? sessions.map((session) => (
-                <Card key={session.id} title={session.title} eyebrow={session.status}>
-                  <p className="muted">
-                    {session.answeredCount}/{session.questionCount} answers submitted
-                  </p>
-                  <p className="muted">
-                    Latest score: {session.overallScore ?? 'Pending'} | Updated{' '}
-                    {new Date(session.updatedAt).toLocaleString()}
-                  </p>
-                  <div className="hero-actions">
-                    <Link className="btn btn-secondary" href={routes.interview(session.id)}>
-                      Open Session
-                    </Link>
-                    <Link className="btn btn-ghost" href={routes.results(session.id)}>
-                      View Results
-                    </Link>
-                  </div>
-                </Card>
-              ))
-            : null}
-        </section>
-      </section>
+            {sessions.length === 0 ? (
+              <EmptyState
+                title="No interviews yet"
+                message="Start your first tailored practice session."
+                action={<Button onClick={createSession}>Start Interview</Button>}
+              />
+            ) : null}
+
+            {sessions.length > 0 && filteredSessions.length === 0 ? (
+              <EmptyState
+                variant="subtle"
+                title="No sessions in this filter"
+                message="Switch filters or start a new interview session."
+              />
+            ) : null}
+
+            <section className="interview-session-grid">
+              {filteredSessions.map((session) => (
+                <InterviewSessionCard key={session.id} session={session} />
+              ))}
+            </section>
+          </section>
+        ) : null}
+      </PageContainer>
     </AppShell>
   );
 }

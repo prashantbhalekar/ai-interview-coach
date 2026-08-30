@@ -2,24 +2,18 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { QuestionReviewItem } from '@/components/interview/question-review-item';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { FeedbackState } from '@/components/ui/feedback-state';
 import { LoadingState } from '@/components/ui/loading-state';
-import { Progress } from '@/components/ui/progress';
+import { PageContainer } from '@/components/ui/page-container';
+import { SectionHeading } from '@/components/ui/section-heading';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { InterviewResultsResponse } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
-
-function truncateWithEllipsis(input: string, limit: number): string {
-  if (input.length <= limit) {
-    return input;
-  }
-
-  return `${input.slice(0, limit)}...`;
-}
 
 export default function ResultsPage() {
   const params = useParams<{ id: string }>();
@@ -28,12 +22,12 @@ export default function ResultsPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'unauthenticated' | 'error'>(
     'loading',
   );
-  const [errorMessage, setErrorMessage] = useState('Unable to load interview results.');
+  const [errorMessage, setErrorMessage] = useState("Couldn't load interview results.");
   const [results, setResults] = useState<InterviewResultsResponse | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
-      setErrorMessage('Interview session ID is missing.');
+      setErrorMessage('Interview session is missing.');
       setStatus('error');
       return;
     }
@@ -66,10 +60,7 @@ export default function ResultsPage() {
           return;
         }
 
-        if (error instanceof ApiClientError) {
-          setErrorMessage(error.message);
-        }
-
+        setErrorMessage("Results couldn't be loaded right now.");
         setStatus('error');
       }
     }
@@ -77,15 +68,40 @@ export default function ResultsPage() {
     void loadResults();
   }, [sessionId]);
 
+  const scoreLabel = useMemo(() => {
+    if (!results) {
+      return '';
+    }
+
+    if (results.overallScore >= 80) {
+      return 'Strong';
+    }
+
+    if (results.overallScore >= 60) {
+      return 'Developing';
+    }
+
+    return 'Needs Improvement';
+  }, [results]);
+
   return (
     <AppShell>
-      <section className="stack">
-        <div>
-          <h1 className="page-title">Interview Results</h1>
-          <p className="page-subtitle">Session ID: {sessionId}</p>
-        </div>
+      <PageContainer>
+        <SectionHeading
+          title="Interview Results"
+          subtitle="Here’s how you performed and what to focus on next."
+        />
 
-        {status === 'loading' ? <LoadingState label="Loading evaluation summary..." /> : null}
+        {status === 'loading' ? (
+          <section className="analysis-loading-sections">
+            <LoadingState label="Loading results..." />
+            <Card>
+              <span className="skeleton skeleton-lg" />
+              <span className="skeleton" />
+              <span className="skeleton" />
+            </Card>
+          </section>
+        ) : null}
 
         {status === 'unauthenticated' ? (
           <EmptyState
@@ -100,83 +116,147 @@ export default function ResultsPage() {
         ) : null}
 
         {status === 'error' ? (
-          <FeedbackState
-            variant="error"
-            title="Results unavailable"
+          <EmptyState
+            title="Results couldn't be loaded"
             message={errorMessage}
-            actions={
-              <Link href={routes.interview(sessionId)} className="btn btn-secondary">
-                Return to Session
-              </Link>
+            action={
+              <div className="hero-actions">
+                <Link href={routes.interview(sessionId)} className="btn btn-secondary">
+                  Return to Session
+                </Link>
+              </div>
             }
           />
         ) : null}
 
         {status === 'ready' && results ? (
           <>
-            <Card title="Overall Score" eyebrow={results.status}>
-              <Progress label="Interview Performance" value={results.overallScore} />
-              <p className="muted">{results.title}</p>
+            <section className="analysis-context-row">
+              <div className="analysis-context-main">
+                <StatusBadge label={results.status} tone="info" />
+                <div className="analysis-context-copy">
+                  <p>
+                    <strong>{results.title}</strong>
+                  </p>
+                  <p className="muted">
+                    {results.answers.length} questions · Completed{' '}
+                    {new Date(
+                      results.answers[results.answers.length - 1]?.createdAt ?? Date.now(),
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <Link href={routes.interviews} className="btn btn-ghost">
+                Back to Interviews
+              </Link>
+            </section>
+
+            <Card className="analysis-hero-card" interactive>
+              <div className="analysis-hero-score">
+                <div
+                  className="analysis-score-ring"
+                  aria-hidden="true"
+                  style={{
+                    background: `conic-gradient(from 180deg, var(--cyan) 0 ${results.overallScore}%, rgba(255, 255, 255, 0.1) ${results.overallScore}% 100%)`,
+                  }}
+                >
+                  <span>{results.overallScore}%</span>
+                </div>
+                <p className="analysis-score-label">Interview Score</p>
+                <StatusBadge
+                  label={scoreLabel}
+                  tone={results.overallScore >= 80 ? 'success' : 'info'}
+                />
+              </div>
+
+              <div className="analysis-hero-copy">
+                <h3>{results.title}</h3>
+                <p className="muted">
+                  {results.strengths[0] ??
+                    'You completed the interview. Review your detailed answers and feedback below.'}
+                </p>
+              </div>
             </Card>
 
-            <section className="info-grid">
-              <Card title="Strengths" eyebrow="Evaluation">
-                <ul className="metric-list">
+            <section className="analysis-two-col">
+              <Card title="What You Did Well" eyebrow="Strengths">
+                <ul className="analysis-list">
                   {(results.strengths.length > 0
                     ? results.strengths
-                    : ['Continue delivering clear and structured interview responses.']
+                    : ['Continue practicing to generate more strength insights.']
                   ).map((strength) => (
                     <li key={strength}>
+                      <span className="analysis-list-icon" aria-hidden="true">
+                        ✓
+                      </span>
                       <span>{strength}</span>
-                      <strong>Strong</strong>
                     </li>
                   ))}
                 </ul>
               </Card>
-              <Card title="Improvements" eyebrow="Evaluation">
-                <ul className="metric-list">
+
+              <Card title="Areas to Improve" eyebrow="Improvements">
+                <ul className="analysis-list">
                   {(results.improvements.length > 0
                     ? results.improvements
-                    : ['Keep practicing and collect more answer data for sharper feedback.']
+                    : ['Continue practicing to unlock focused improvement guidance.']
                   ).map((improvement) => (
                     <li key={improvement}>
+                      <span className="analysis-list-icon" aria-hidden="true">
+                        →
+                      </span>
                       <span>{improvement}</span>
-                      <strong>Focus</strong>
                     </li>
                   ))}
                 </ul>
               </Card>
             </section>
 
-            <Card title="Follow-up Plan" eyebrow="Next Session Prep">
-              <ul className="metric-list">
+            <section className="stack">
+              <SectionHeading title="Question Breakdown" />
+              <div className="question-review-list">
+                {results.answers.map((answer) => (
+                  <QuestionReviewItem key={answer.id} answer={answer} />
+                ))}
+              </div>
+            </section>
+
+            <section className="stack">
+              <SectionHeading
+                title="Your Improvement Plan"
+                subtitle="Focus on these areas before your next practice session."
+              />
+              <div className="focus-area-list">
                 {(results.followUpPlan.length > 0
                   ? results.followUpPlan
-                  : ['Start another session to generate a personalized follow-up plan.']
-                ).map((item) => (
-                  <li key={item}>
-                    <span>{item}</span>
-                    <strong>Next</strong>
-                  </li>
+                  : ['Start another interview session to generate a personalized improvement plan.']
+                ).map((item, index) => (
+                  <article key={item} className="focus-area-item">
+                    <span className="focus-index">{String(index + 1).padStart(2, '0')}</span>
+                    <p>{item}</p>
+                  </article>
                 ))}
-              </ul>
-            </Card>
+              </div>
+            </section>
 
-            <Card title="Answer History" eyebrow="Transcript">
-              <ul className="metric-list">
-                {results.answers.map((answer) => (
-                  <li key={answer.id}>
-                    <span>
-                      Q{answer.order + 1}: {truncateWithEllipsis(answer.questionText, 58)}
-                    </span>
-                    <strong>{answer.score}</strong>
-                  </li>
-                ))}
-              </ul>
+            <Card className="analysis-next-step" interactive>
+              <SectionHeading
+                title="Ready for another round?"
+                subtitle="Practice your weak areas while they're fresh."
+                className="section-heading-compact"
+              />
+              <div className="cta-actions">
+                <Link href={routes.interviews} className="btn btn-primary">
+                  Practice Again
+                </Link>
+                <Link href={routes.interviews} className="btn btn-secondary">
+                  Back to Interviews
+                </Link>
+              </div>
             </Card>
           </>
         ) : null}
-      </section>
+      </PageContainer>
     </AppShell>
   );
 }
