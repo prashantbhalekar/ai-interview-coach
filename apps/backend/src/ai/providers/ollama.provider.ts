@@ -30,21 +30,28 @@ export class OllamaProvider implements AiProvider {
     const model = input.model ?? this.configService.get<string>('OLLAMA_MODEL', 'llama3.1:8b');
     const endpoint = `${baseUrl.replace(/\/$/, '')}/api/generate`;
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        prompt: `${input.prompt}\n\nReturn only valid JSON.`,
-        format: 'json',
-        stream: false,
-        options: {
-          temperature: input.temperature ?? 0.2,
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: JSON.stringify({
+          model,
+          prompt: `${input.prompt}\n\nReturn only valid JSON.`,
+          format: 'json',
+          stream: false,
+          options: {
+            temperature: input.temperature ?? 0.2,
+          },
+        }),
+      });
+    } catch {
+      throw new ServiceUnavailableException(
+        `Ollama is unreachable at ${baseUrl}. Start Ollama on the host (for example: 'ollama serve') and ensure model '${model}' is available.`,
+      );
+    }
 
     if (!response.ok) {
       const errorBody = await response.text();

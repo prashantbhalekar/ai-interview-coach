@@ -101,6 +101,14 @@ export default function ResumePage() {
       return;
     }
 
+    if (resumeText.trim().length < 120) {
+      setResumeErrorMessage(
+        'Add resume text (at least 120 characters) before uploading so analysis can run reliably.',
+      );
+      setResumeStatus('error');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('file', resumeFile);
@@ -136,6 +144,14 @@ export default function ResumePage() {
     if (jobDescription.trim().length < 80) {
       setJobErrorMessage(
         'Provide at least a short paragraph so AI can match role expectations accurately.',
+      );
+      setJobStatus('error');
+      return;
+    }
+
+    if (resumeText.trim().length < 120) {
+      setJobErrorMessage(
+        'Add resume text (at least 120 characters) to save analysis-ready context.',
       );
       setJobStatus('error');
       return;
@@ -192,9 +208,11 @@ export default function ResumePage() {
                 Resume Text
                 <textarea
                   className="textarea"
-                  placeholder="Optional for this step: paste resume text now, or add it later on Analysis to run structured scoring..."
+                  placeholder="Paste resume text (minimum 120 characters) so AI can run structured analysis..."
                   value={resumeText}
                   onChange={(event) => setResumeText(event.target.value)}
+                  required
+                  minLength={120}
                 />
               </label>
               {resumeStatus === 'idle' && !resumeName ? (
