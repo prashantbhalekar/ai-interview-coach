@@ -5,11 +5,16 @@ interface CardProps {
   eyebrow?: string;
   children: ReactNode;
   className?: string;
+  interactive?: boolean;
 }
 
-export function Card({ title, eyebrow, children, className = '' }: CardProps) {
+export function Card({ title, eyebrow, children, className = '', interactive = false }: CardProps) {
   return (
-    <section className={['card glass glow-border', className].filter(Boolean).join(' ')}>
+    <section
+      className={['card glass', interactive ? 'card-interactive' : '', className]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {(eyebrow || title) && (
         <header className="card-header">
           {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}

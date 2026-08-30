@@ -1,15 +1,17 @@
 interface ProgressProps {
   label: string;
   value: number;
+  compact?: boolean;
+  showValue?: boolean;
 }
 
-export function Progress({ label, value }: ProgressProps) {
+export function Progress({ label, value, compact = false, showValue = true }: ProgressProps) {
   const clamped = Math.max(0, Math.min(100, value));
   return (
-    <div className="progress-wrap">
+    <div className={['progress-wrap', compact ? 'progress-compact' : ''].filter(Boolean).join(' ')}>
       <div className="progress-row">
         <span>{label}</span>
-        <strong>{clamped}%</strong>
+        {showValue ? <strong>{clamped}%</strong> : null}
       </div>
       <div
         className="progress-track"

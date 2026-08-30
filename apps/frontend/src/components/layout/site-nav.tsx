@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { AuthUser } from '@/lib/contracts';
 import { routes } from '@/lib/routes';
@@ -16,6 +16,7 @@ const navItems = [
 
 export function SiteNav() {
   const router = useRouter();
+  const pathname = usePathname();
   const [status, setStatus] = useState<'loading' | 'guest' | 'authenticated'>('loading');
   const [user, setUser] = useState<AuthUser | null>(null);
 
@@ -79,6 +80,13 @@ export function SiteNav() {
     router.push(routes.coach);
   }
 
+  function isNavItemActive(href: string): boolean {
+    if (href === routes.coach) {
+      return pathname === href;
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   return (
     <header className="site-nav-wrap">
       <nav className="site-nav container glass">
@@ -87,7 +95,13 @@ export function SiteNav() {
         </Link>
         <div className="nav-links">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="nav-link">
+            <Link
+              key={item.href}
+              href={item.href}
+              className={['nav-link', isNavItemActive(item.href) ? 'nav-link-active' : '']
+                .filter(Boolean)
+                .join(' ')}
+            >
               {item.label}
             </Link>
           ))}
@@ -95,7 +109,15 @@ export function SiteNav() {
         <div className="nav-actions">
           {status === 'authenticated' ? (
             <>
-              <Link href={routes.dashboard} className="nav-link quiet-link">
+              <Link
+                href={routes.dashboard}
+                className={[
+                  'nav-link quiet-link',
+                  isNavItemActive(routes.dashboard) ? 'nav-link-active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 Dashboard
               </Link>
               <button type="button" className="btn btn-secondary nav-cta" onClick={handleLogout}>
