@@ -12,9 +12,8 @@ import { Progress } from '@/components/ui/progress';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { apiRequest, ApiClientError } from '@/lib/api-client';
 import type { AuthUser, InterviewSessionSummary } from '@/lib/contracts';
+import { loadResumeContextForToken } from '@/lib/resume-context';
 import { routes } from '@/lib/routes';
-
-const RESUME_CONTEXT_STORAGE_KEY = 'aiic.resumeContext.v1';
 
 interface ResumeContextSnapshot {
   resumeStatus?: string;
@@ -41,14 +40,8 @@ export default function DashboardPage() {
 
     const authToken: string = token;
 
-    const storedContext = localStorage.getItem(RESUME_CONTEXT_STORAGE_KEY);
-    if (storedContext) {
-      try {
-        setResumeContext(JSON.parse(storedContext) as ResumeContextSnapshot);
-      } catch {
-        setResumeContext(null);
-      }
-    }
+    const storedContext = loadResumeContextForToken(authToken);
+    setResumeContext(storedContext ? (storedContext as ResumeContextSnapshot) : null);
 
     async function loadProfile(): Promise<void> {
       try {

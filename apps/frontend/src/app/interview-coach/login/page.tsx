@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { FeedbackState } from '@/components/ui/feedback-state';
 import { apiRequest, ApiClientError } from '@/lib/api-client';
 import type { AuthResponse, LoginRequest } from '@/lib/contracts';
+import { setActiveUserId } from '@/lib/resume-context';
 import { routes } from '@/lib/routes';
 
 export default function LoginPage() {
@@ -34,6 +35,7 @@ export default function LoginPage() {
       });
 
       localStorage.setItem('aiic.accessToken', response.accessToken);
+      setActiveUserId(response.user.id);
       setStatus('success');
       router.push(routes.dashboard);
     } catch (error: unknown) {

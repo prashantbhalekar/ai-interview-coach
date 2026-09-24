@@ -13,18 +13,12 @@ import { SectionHeading } from '@/components/ui/section-heading';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ApiClientError, apiRequest, apiUpload } from '@/lib/api-client';
 import type { ResumeStatusResponse, ResumeUploadResponse } from '@/lib/contracts';
+import {
+  clearResumeContextForToken,
+  loadResumeContextForToken,
+  saveResumeContextForToken,
+} from '@/lib/resume-context';
 import { routes } from '@/lib/routes';
-
-const STORAGE_KEY = 'aiic.resumeContext.v1';
-
-interface PersistedResumeContext {
-  resumeId: string;
-  resumeFileName: string;
-  resumeStatus: string;
-  resumeText: string;
-  jobDescription: string;
-  updatedAt: string;
-}
 
 export default function ResumePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -40,32 +34,66 @@ export default function ResumePage() {
   const [jobDescription, setJobDescription] = useState<string>('');
   const [resumeErrorMessage, setResumeErrorMessage] = useState('Unable to upload resume.');
   const [jobErrorMessage, setJobErrorMessage] = useState('Unable to save job context.');
-  const [showExtractedPreview, setShowExtractedPreview] = useState(false);
-  const [showDebugEditor, setShowDebugEditor] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
+    const token = getAccessToken();
+    if (!token) {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(raw) as Partial<PersistedResumeContext>;
-      setResumeName(parsed.resumeFileName ?? '');
-      setResumeText(parsed.resumeText ?? '');
-      setJobDescription(parsed.jobDescription ?? '');
-      if ((parsed.resumeFileName ?? '').trim()) {
-        const normalizedStatus = normalizeResumeStatus(parsed.resumeStatus ?? 'READY');
-        setResumeStatus(normalizedStatus);
-      }
-      if ((parsed.jobDescription ?? '').trim().length >= 80) {
-        setJobStatus('saved');
-      } else if ((parsed.jobDescription ?? '').trim().length > 0) {
-        setJobStatus('editing');
-      }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
+    const parsed = loadResumeContextForToken(token);
+    if (!parsed) {
+      return;
+    }
+
+    setResumeName(parsed.resumeFileName ?? '');
+    setResumeText(parsed.resumeText ?? '');
+    setJobDescription(parsed.jobDescription ?? '');
+
+    if ((parsed.resumeFileName ?? '').trim()) {
+      const normalizedStatus = normalizeResumeStatus(parsed.resumeStatus ?? 'READY');
+      setResumeStatus(normalizedStatus);
+    }
+
+    if ((parsed.jobDescription ?? '').trim().length >= 80) {
+      setJobStatus('saved');
+    } else if ((parsed.jobDescription ?? '').trim().length > 0) {
+      setJobStatus('editing');
+    }
+
+    if ((parsed.resumeId ?? '').trim()) {
+      void (async () => {
+        try {
+          const status = await apiRequest<ResumeStatusResponse>(
+            `/resumes/${parsed.resumeId}/status`,
+            {
+              token,
+            },
+          );
+
+          const normalizedStatus = normalizeResumeStatus(status.status);
+          setResumeStatus(normalizedStatus);
+          setResumeName(status.fileName);
+
+          saveResumeContextForToken(token, {
+            ...parsed,
+            resumeFileName: status.fileName,
+            resumeStatus: normalizedStatus,
+            updatedAt: new Date().toISOString(),
+          });
+        } catch (error: unknown) {
+          if (error instanceof ApiClientError && (error.status === 401 || error.status === 404)) {
+            clearResumeContextForToken(token);
+            setResumeFile(null);
+            setResumeName('');
+            setResumeText('');
+            setJobDescription('');
+            setResumeStatus('empty');
+            setJobStatus('empty');
+          }
+        }
+      })();
     }
   }, []);
 
@@ -83,10 +111,6 @@ export default function ResumePage() {
 
   function getAccessToken(): string | null {
     return localStorage.getItem('aiic.accessToken');
-  }
-
-  function persistContext(context: PersistedResumeContext): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(context));
   }
 
   async function waitForStableResumeStatus(
@@ -163,9 +187,7 @@ export default function ResumePage() {
     }
 
     if (resumeText.trim().length < 120) {
-      setResumeErrorMessage(
-        'Add extracted resume text (at least 120 characters) in preview mode before uploading.',
-      );
+      setResumeErrorMessage('Add resume text (at least 120 characters) before uploading.');
       setResumeStatus('failed');
       return;
     }
@@ -182,7 +204,7 @@ export default function ResumePage() {
       const status = await waitForStableResumeStatus(token, upload.resumeId);
       const normalizedStatus = normalizeResumeStatus(status?.status ?? upload.status);
 
-      persistContext({
+      saveResumeContextForToken(token, {
         resumeId: upload.resumeId,
         resumeFileName: upload.fileName,
         resumeStatus: normalizedStatus,
@@ -222,20 +244,19 @@ export default function ResumePage() {
       return;
     }
 
-    let existing: Partial<PersistedResumeContext> = {};
-    const existingRaw = localStorage.getItem(STORAGE_KEY);
-    if (existingRaw) {
-      try {
-        existing = JSON.parse(existingRaw) as Partial<PersistedResumeContext>;
-      } catch {
-        existing = {};
-      }
+    const token = getAccessToken();
+    if (!token) {
+      setJobErrorMessage('Please log in before saving job context.');
+      setJobStatus('failed');
+      return;
     }
 
-    persistContext({
-      resumeId: existing.resumeId ?? '',
-      resumeFileName: existing.resumeFileName ?? resumeName,
-      resumeStatus: normalizeResumeStatus(existing.resumeStatus),
+    const existing = loadResumeContextForToken(token) ?? null;
+
+    saveResumeContextForToken(token, {
+      resumeId: existing?.resumeId ?? '',
+      resumeFileName: existing?.resumeFileName ?? resumeName,
+      resumeStatus: normalizeResumeStatus(existing?.resumeStatus),
       resumeText,
       jobDescription,
       updatedAt: new Date().toISOString(),
@@ -249,25 +270,20 @@ export default function ResumePage() {
     setResumeName('');
     setResumeText('');
     setResumeStatus('empty');
-    setShowExtractedPreview(false);
-    setShowDebugEditor(false);
 
-    let existing: Partial<PersistedResumeContext> = {};
-    const existingRaw = localStorage.getItem(STORAGE_KEY);
-    if (existingRaw) {
-      try {
-        existing = JSON.parse(existingRaw) as Partial<PersistedResumeContext>;
-      } catch {
-        existing = {};
-      }
+    const token = getAccessToken();
+    if (!token) {
+      return;
     }
 
-    persistContext({
+    const existing = loadResumeContextForToken(token) ?? null;
+
+    saveResumeContextForToken(token, {
       resumeId: '',
       resumeFileName: '',
       resumeStatus: 'empty',
       resumeText: '',
-      jobDescription: existing.jobDescription ?? jobDescription,
+      jobDescription: existing?.jobDescription ?? jobDescription,
       updatedAt: new Date().toISOString(),
     });
   }
@@ -443,53 +459,30 @@ export default function ResumePage() {
 
                   <div className="extracted-state">
                     <p>
-                      <strong>Resume extracted successfully</strong>
+                      <strong>
+                        {resumeStatus === 'ready'
+                          ? 'Resume text ready'
+                          : 'Review resume text before upload'}
+                      </strong>
                     </p>
                     <p className="muted">
-                      We found candidate summary, experience, skills, and work history.
+                      {resumeStatus === 'ready'
+                        ? 'Use this text for analysis, or make edits before refreshing your results.'
+                        : 'Paste or review the text used for analysis, then upload the selected PDF.'}
                     </p>
 
-                    <button
-                      type="button"
-                      className="btn btn-ghost extracted-toggle"
-                      onClick={() => setShowExtractedPreview((current) => !current)}
-                      aria-expanded={showExtractedPreview}
-                      aria-controls="resume-extracted-preview"
-                    >
-                      {showExtractedPreview ? 'Hide extracted text' : 'Preview extracted text'}
-                    </button>
-
-                    {showExtractedPreview ? (
-                      <div id="resume-extracted-preview" className="extracted-preview-panel">
-                        {resumeText.trim().length > 0 ? (
-                          <pre>{resumeText}</pre>
-                        ) : (
-                          <p className="muted">No extracted text available yet.</p>
-                        )}
-                      </div>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      className="btn btn-ghost extracted-toggle"
-                      onClick={() => setShowDebugEditor((current) => !current)}
-                      aria-expanded={showDebugEditor}
-                    >
-                      {showDebugEditor ? 'Hide debug editor' : 'Edit extracted text (debug)'}
-                    </button>
-
-                    {showDebugEditor ? (
-                      <label className="form-grid">
-                        <span className="muted">Extracted resume text (debug only)</span>
-                        <textarea
-                          className="textarea extracted-debug-textarea"
-                          placeholder="Paste extracted resume text (minimum 120 characters)..."
-                          value={resumeText}
-                          onChange={(event) => setResumeText(event.target.value)}
-                          minLength={120}
-                        />
-                      </label>
-                    ) : null}
+                    <label className="form-grid">
+                      <span className="muted">
+                        Resume Text (required for analysis, minimum 120 characters)
+                      </span>
+                      <textarea
+                        className="textarea extracted-debug-textarea"
+                        placeholder="Paste or edit resume text used for analysis..."
+                        value={resumeText}
+                        onChange={(event) => setResumeText(event.target.value)}
+                        minLength={120}
+                      />
+                    </label>
                   </div>
 
                   <Button
@@ -697,7 +690,7 @@ function getResumeStatusTitle(
   if (status === 'failed') {
     return 'Processing failed';
   }
-  return 'Resume selected';
+  return 'PDF selected';
 }
 
 function getResumeStatusDescription(
@@ -715,5 +708,5 @@ function getResumeStatusDescription(
   if (status === 'failed') {
     return 'Resume processing failed. Retry upload after checking your file.';
   }
-  return 'Upload this resume to continue preparing your interview context.';
+  return 'Add or review the resume text below, then upload this PDF.';
 }

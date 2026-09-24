@@ -13,18 +13,8 @@ import { SectionHeading } from '@/components/ui/section-heading';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { AnalyzeResumeResponse } from '@/lib/contracts';
+import { loadResumeContextForToken, type PersistedResumeContext } from '@/lib/resume-context';
 import { routes } from '@/lib/routes';
-
-const STORAGE_KEY = 'aiic.resumeContext.v1';
-
-interface PersistedResumeContext {
-  resumeId: string;
-  resumeFileName: string;
-  resumeStatus: string;
-  resumeText: string;
-  jobDescription: string;
-  updatedAt: string;
-}
 
 export default function AnalysisPage() {
   const [state, setState] = useState<
@@ -49,25 +39,20 @@ export default function AnalysisPage() {
       return;
     }
 
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
+    const parsed = loadResumeContextForToken(token);
+    if (!parsed) {
       setState('empty');
       return;
     }
 
-    try {
-      const parsed = JSON.parse(raw) as PersistedResumeContext;
-      setContext(parsed);
+    setContext(parsed);
 
-      if (parsed.resumeText.trim().length < 120 || parsed.jobDescription.trim().length < 80) {
-        setState('empty');
-        return;
-      }
-
-      setState('ready');
-    } catch {
+    if (parsed.resumeText.trim().length < 120 || parsed.jobDescription.trim().length < 80) {
       setState('empty');
+      return;
     }
+
+    setState('ready');
   }, []);
 
   async function refreshAnalysis(): Promise<void> {

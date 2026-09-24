@@ -5,6 +5,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ApiClientError, apiRequest } from '@/lib/api-client';
 import type { AuthUser } from '@/lib/contracts';
+import {
+  clearActiveUserId,
+  clearResumeContextForToken,
+  setActiveUserId,
+} from '@/lib/resume-context';
 import { routes } from '@/lib/routes';
 
 const navItems = [
@@ -35,10 +40,13 @@ export function SiteNav() {
         const me = await apiRequest<AuthUser>('/users/me', {
           token: authToken,
         });
+        setActiveUserId(me.id);
         setUser(me);
         setStatus('authenticated');
       } catch (error: unknown) {
         if (error instanceof ApiClientError && error.status === 401) {
+          clearResumeContextForToken(authToken);
+          clearActiveUserId();
           localStorage.removeItem('aiic.accessToken');
         }
         setStatus('guest');
@@ -72,8 +80,11 @@ export function SiteNav() {
       } catch {
         // Logout is client-authoritative for JWT cleanup in this MVP.
       }
+
+      clearResumeContextForToken(token);
     }
 
+    clearActiveUserId();
     localStorage.removeItem('aiic.accessToken');
     setUser(null);
     setStatus('guest');
