@@ -66,6 +66,18 @@ services:
       AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: ${AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES:-200}
     ports:
       - '${BACKEND_PORT:-3001}:3001'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3001/api/v1/health/readiness').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   worker:
@@ -78,7 +90,7 @@ services:
       redis:
         condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/ai_interview_coach}
@@ -96,7 +108,7 @@ services:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}

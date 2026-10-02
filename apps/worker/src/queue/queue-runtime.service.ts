@@ -140,15 +140,19 @@ export class QueueRuntimeService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processAnalysisJob(job: Job<AnalysisProcessingJobPayload>): Promise<void> {
-    this.logger.log(
-      `Analysis job received analysisId=${job.data.analysisId} userId=${job.data.userId} (processor scaffold)`,
+    const error = new Error(
+      `Analysis processor not implemented for analysisId=${job.data.analysisId} userId=${job.data.userId}`,
     );
+    this.logger.error(error.message);
+    throw error;
   }
 
   private async processInterviewJob(job: Job<InterviewProcessingJobPayload>): Promise<void> {
-    this.logger.log(
-      `Interview job received interviewSessionId=${job.data.interviewSessionId} userId=${job.data.userId} (processor scaffold)`,
+    const error = new Error(
+      `Interview processor not implemented for interviewSessionId=${job.data.interviewSessionId} userId=${job.data.userId}`,
     );
+    this.logger.error(error.message);
+    throw error;
   }
 
   private async processEmbeddingJob(job: Job<EmbeddingProcessingJobPayload>): Promise<void> {

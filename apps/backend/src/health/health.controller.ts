@@ -1,14 +1,22 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { HealthService } from './health.service';
 
 @Controller('health')
 export class HealthController {
+  constructor(private readonly healthService: HealthService) {}
+
   @Get()
-  check() {
-    return {
-      success: true,
-      service: 'backend',
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
+  checkLiveness() {
+    return this.healthService.getLivenessPayload();
+  }
+
+  @Get('readiness')
+  async checkReadiness() {
+    const readiness = await this.healthService.getReadinessPayload();
+    if (!readiness.success) {
+      throw new ServiceUnavailableException(readiness);
+    }
+
+    return readiness;
   }
 }

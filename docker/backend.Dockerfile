@@ -34,4 +34,6 @@ COPY --from=build /app /app
 
 EXPOSE 3001
 
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD node -e "fetch('http://localhost:3001/api/v1/health/readiness').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
+
 CMD ["sh", "-c", "pnpm --filter backend prisma:deploy && pnpm --filter backend start"]
