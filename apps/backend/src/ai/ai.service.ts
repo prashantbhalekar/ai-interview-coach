@@ -9,12 +9,17 @@ import { ConfigService } from '@nestjs/config';
 import { ZodError, ZodSchema } from 'zod';
 import { AI_PROVIDER_REGISTRY } from './ai.constants';
 import { AiUsageService } from './ai-usage.service';
+import { buildInterviewQuestionsPrompt } from './prompts/interview-questions.prompt';
 import { buildResumeAnalysisPrompt } from './prompts/resume-analysis.prompt';
 import {
   type AiProvider,
   type AiProviderName,
   type GenerateStructuredOutputResult,
 } from './providers/ai-provider.interface';
+import {
+  interviewQuestionsJsonSchema,
+  interviewQuestionsSchema,
+} from './schemas/interview-questions.schema';
 import {
   resumeAnalysisJsonSchema,
   resumeAnalysisSchema,
@@ -31,6 +36,18 @@ interface AnalyzeResumeOutput {
   provider: AiProviderName;
   model: string;
   result: ResumeAnalysisResult;
+}
+
+interface GenerateInterviewQuestionsInput {
+  userId: string;
+  focusArea: string;
+  questionCount: number;
+}
+
+interface GenerateInterviewQuestionsOutput {
+  provider: AiProviderName;
+  model: string;
+  questions: string[];
 }
 
 interface CacheEntry {
@@ -104,6 +121,69 @@ export class AiService {
         provider: provider.name,
         model: providerResult?.model ?? fallbackModel,
         operation: 'resume_analysis',
+        latencyMs: Date.now() - startTime,
+        promptChars: prompt.length,
+        errorMessage: message,
+      });
+
+      throw error;
+    }
+  }
+
+  async generateInterviewQuestions(
+    input: GenerateInterviewQuestionsInput,
+  ): Promise<GenerateInterviewQuestionsOutput> {
+    const provider = this.resolveProvider();
+    const prompt = buildInterviewQuestionsPrompt({
+      focusArea: input.focusArea,
+      questionCount: input.questionCount,
+    });
+
+    const startTime = Date.now();
+    let providerResult: GenerateStructuredOutputResult | null = null;
+
+    try {
+      providerResult = await provider.generateStructuredOutput({
+        operation: 'interview_question_generation',
+        schemaName: 'InterviewQuestionsResult',
+        prompt,
+        responseJsonSchema: interviewQuestionsJsonSchema,
+      });
+
+      const parsed = this.parseStructuredOutput(providerResult.text, interviewQuestionsSchema);
+      const uniqueQuestions = Array.from(
+        new Set(parsed.questions.map((question) => question.trim()).filter(Boolean)),
+      ).slice(0, input.questionCount);
+
+      if (uniqueQuestions.length === 0) {
+        throw new BadGatewayException('AI response did not contain usable interview questions');
+      }
+
+      await this.aiUsageService.recordSuccess({
+        userId: input.userId,
+        provider: providerResult.provider,
+        model: providerResult.model,
+        operation: 'interview_question_generation',
+        latencyMs: Date.now() - startTime,
+        promptChars: prompt.length,
+        responseChars: providerResult.text.length,
+        ...(providerResult.usage ? { usage: providerResult.usage } : {}),
+      });
+
+      return {
+        provider: providerResult.provider,
+        model: providerResult.model,
+        questions: uniqueQuestions,
+      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown AI failure';
+      const fallbackModel = this.getConfiguredModel(provider.name);
+
+      await this.aiUsageService.recordFailure({
+        userId: input.userId,
+        provider: provider.name,
+        model: providerResult?.model ?? fallbackModel,
+        operation: 'interview_question_generation',
         latencyMs: Date.now() - startTime,
         promptChars: prompt.length,
         errorMessage: message,

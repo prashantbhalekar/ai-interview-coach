@@ -8,6 +8,6 @@ export class CreateInterviewSessionDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
+  @MaxLength(1200)
   focusArea?: string;
 }

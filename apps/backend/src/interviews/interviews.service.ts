@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { AiService } from '../ai/ai.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInterviewSessionDto } from './dto/create-interview-session.dto';
 import { SubmitInterviewAnswerDto } from './dto/submit-interview-answer.dto';
@@ -47,6 +48,11 @@ export interface InterviewSessionDetailDto {
   title: string;
   focusArea: string | null;
   status: string;
+  questionGeneration: {
+    source: 'ai' | 'fallback';
+    provider?: string;
+    model?: string;
+  } | null;
   currentQuestionIndex: number;
   currentQuestion: InterviewQuestionDto | null;
   questions: InterviewQuestionDto[];
@@ -77,7 +83,15 @@ export interface InterviewResultDto {
 
 @Injectable()
 export class InterviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private static readonly DEFAULT_QUESTION_COUNT = 5;
+  private static readonly DEFAULT_QUESTION_SOURCE = {
+    source: 'fallback',
+  } as const;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+  ) {}
 
   async createSession(
     userId: string,
@@ -85,7 +99,8 @@ export class InterviewsService {
   ): Promise<InterviewSessionDetailDto> {
     const focusArea = dto.focusArea?.trim() || 'backend engineering';
     const title = dto.title?.trim() || `Interview Practice - ${focusArea}`;
-    const questions = this.buildQuestionSet(focusArea);
+    const generatedSet = await this.buildQuestionSet(userId, focusArea);
+    const questions = generatedSet.questions;
 
     const session = await this.prisma.interviewSession.create({
       data: {
@@ -119,7 +134,7 @@ export class InterviewsService {
       },
     });
 
-    return this.toSessionDetailDto(session);
+    return this.toSessionDetailDto(session, generatedSet.questionGeneration);
   }
 
   async listSessions(userId: string): Promise<InterviewSessionSummaryDto[]> {
@@ -357,14 +372,48 @@ export class InterviewsService {
     };
   }
 
-  private buildQuestionSet(focusArea: string): string[] {
-    return [
-      `Describe a production incident related to ${focusArea} and how you resolved it.`,
-      `How would you design a scalable architecture for ${focusArea} with reliability in mind?`,
-      `What trade-offs do you consider when balancing delivery speed and quality in ${focusArea}?`,
-      `How do you measure impact and define success metrics for ${focusArea} initiatives?`,
-      `What would you improve first in an existing ${focusArea} codebase and why?`,
-    ];
+  private async buildQuestionSet(
+    userId: string,
+    focusArea: string,
+  ): Promise<{
+    questions: string[];
+    questionGeneration: {
+      source: 'ai' | 'fallback';
+      provider?: string;
+      model?: string;
+    };
+  }> {
+    try {
+      const generated = await this.aiService.generateInterviewQuestions({
+        userId,
+        focusArea,
+        questionCount: InterviewsService.DEFAULT_QUESTION_COUNT,
+      });
+
+      if (generated.questions.length >= 3) {
+        return {
+          questions: generated.questions,
+          questionGeneration: {
+            source: 'ai',
+            provider: generated.provider,
+            model: generated.model,
+          },
+        };
+      }
+    } catch {
+      // Fall back to deterministic baseline question set when AI is unavailable.
+    }
+
+    return {
+      questions: [
+        `Describe a production incident related to ${focusArea} and how you resolved it.`,
+        `How would you design a scalable architecture for ${focusArea} with reliability in mind?`,
+        `What trade-offs do you consider when balancing delivery speed and quality in ${focusArea}?`,
+        `How do you measure impact and define success metrics for ${focusArea} initiatives?`,
+        `What would you improve first in an existing ${focusArea} codebase and why?`,
+      ],
+      questionGeneration: { ...InterviewsService.DEFAULT_QUESTION_SOURCE },
+    };
   }
 
   private scoreAnswer(answerText: string): number {
@@ -450,34 +499,41 @@ export class InterviewsService {
     };
   }
 
-  private toSessionDetailDto(session: {
-    id: string;
-    title: string;
-    focusArea: string | null;
-    status: string;
-    currentQuestionIndex: number;
-    questions: Array<{ id: string; order: number; text: string }>;
-    answers: Array<{
+  private toSessionDetailDto(
+    session: {
       id: string;
-      order: number;
-      questionId: string;
-      answerText: string;
-      score: number;
-      feedbackSummary: string;
-      followUpQuestion: string;
+      title: string;
+      focusArea: string | null;
+      status: string;
+      currentQuestionIndex: number;
+      questions: Array<{ id: string; order: number; text: string }>;
+      answers: Array<{
+        id: string;
+        order: number;
+        questionId: string;
+        answerText: string;
+        score: number;
+        feedbackSummary: string;
+        followUpQuestion: string;
+        createdAt: Date;
+        question: { text: string };
+      }>;
+      evaluation: {
+        overallScore: number;
+        strengths: string[];
+        improvements: string[];
+        followUpPlan: string[];
+        updatedAt: Date;
+      } | null;
       createdAt: Date;
-      question: { text: string };
-    }>;
-    evaluation: {
-      overallScore: number;
-      strengths: string[];
-      improvements: string[];
-      followUpPlan: string[];
       updatedAt: Date;
-    } | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): InterviewSessionDetailDto {
+    },
+    questionGeneration: {
+      source: 'ai' | 'fallback';
+      provider?: string;
+      model?: string;
+    } | null = null,
+  ): InterviewSessionDetailDto {
     const currentQuestion =
       session.status === 'ACTIVE'
         ? (session.questions[session.currentQuestionIndex] ?? null)
@@ -488,6 +544,7 @@ export class InterviewsService {
       title: session.title,
       focusArea: session.focusArea,
       status: session.status,
+      questionGeneration,
       currentQuestionIndex: session.currentQuestionIndex,
       currentQuestion: currentQuestion
         ? {

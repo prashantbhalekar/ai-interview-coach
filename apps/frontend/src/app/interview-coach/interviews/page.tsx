@@ -168,12 +168,15 @@ export default function InterviewsPage() {
 
             <label className="form-grid">
               <span>Focus Area</span>
-              <input
-                className="input"
+              <textarea
+                className="textarea"
                 value={focusArea}
                 onChange={(event) => setFocusArea(event.target.value)}
-                maxLength={100}
+                maxLength={1200}
+                rows={4}
+                placeholder="Describe skills, scenarios, constraints, and outcomes you want the interview to target."
               />
+              <span className="muted">{focusArea.length}/1200 characters</span>
             </label>
 
             <p className="muted">Personalized using your resume and target role.</p>

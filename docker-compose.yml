@@ -39,23 +39,33 @@ services:
       redis:
         condition: service_healthy
     environment:
-      NODE_ENV: development
-      PORT: 3001
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_interview_coach
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: change_me_now
-      FRONTEND_URL: http://localhost:3000
-      AI_PROVIDER: ollama
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
-      OLLAMA_MODEL: llama3.1:8b
-      STORAGE_DRIVER: local
-      STORAGE_LOCAL_BASE_PATH: .storage
-      AI_RATE_LIMIT_WINDOW_MS: 60000
-      AI_RATE_LIMIT_MAX_REQUESTS: 20
-      AI_RESUME_ANALYSIS_CACHE_TTL_MS: 120000
-      AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: 200
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-3001}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/ai_interview_coach}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:-change_me_now}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash-lite}
+      GEMINI_REQUEST_TIMEOUT_MS: ${GEMINI_REQUEST_TIMEOUT_MS:-30000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_BASE_PATH: ${STORAGE_LOCAL_BASE_PATH:-.storage}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-}
+      R2_ENDPOINT: ${R2_ENDPOINT:-}
+      AI_RATE_LIMIT_WINDOW_MS: ${AI_RATE_LIMIT_WINDOW_MS:-60000}
+      AI_RATE_LIMIT_MAX_REQUESTS: ${AI_RATE_LIMIT_MAX_REQUESTS:-20}
+      AI_RESUME_ANALYSIS_CACHE_TTL_MS: ${AI_RESUME_ANALYSIS_CACHE_TTL_MS:-120000}
+      AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: ${AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES:-200}
     ports:
-      - '3001:3001'
+      - '${BACKEND_PORT:-3001}:3001'
     restart: unless-stopped
 
   worker:
@@ -70,12 +80,12 @@ services:
       backend:
         condition: service_started
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_interview_coach
-      REDIS_URL: redis://redis:6379
-      WORKER_CONCURRENCY: 5
-      EMBEDDING_CHUNK_TARGET_CHARS: 1200
-      EMBEDDING_CHUNK_OVERLAP_CHARS: 120
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/ai_interview_coach}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      EMBEDDING_CHUNK_TARGET_CHARS: ${EMBEDDING_CHUNK_TARGET_CHARS:-1200}
+      EMBEDDING_CHUNK_OVERLAP_CHARS: ${EMBEDDING_CHUNK_OVERLAP_CHARS:-120}
     restart: unless-stopped
 
   frontend:
@@ -83,16 +93,16 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api/v1
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}
     depends_on:
       backend:
         condition: service_started
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api/v1
-      NEXT_PUBLIC_APP_BASE_PATH: /interview-coach
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api/v1}
+      NEXT_PUBLIC_APP_BASE_PATH: ${NEXT_PUBLIC_APP_BASE_PATH:-/interview-coach}
     ports:
-      - '3000:3000'
+      - '${FRONTEND_PORT:-3000}:3000'
     restart: unless-stopped
 
 volumes:

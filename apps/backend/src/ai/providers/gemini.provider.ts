@@ -63,27 +63,39 @@ export class GeminiProvider implements AiProvider {
       controller.abort();
     }, timeoutMs);
 
+    const requestHeaders = {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    };
+
+    const requestBody = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: input.prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: input.temperature ?? 0.2,
+        responseMimeType: 'application/json',
+        ...(input.responseJsonSchema ? { responseJsonSchema: input.responseJsonSchema } : {}),
+      },
+    };
+
     let response: Response;
     try {
+      console.log('Gemini outgoing request', {
+        endpoint,
+        method: 'POST',
+        headers: requestHeaders,
+        body: requestBody,
+        timeoutMs,
+      });
+
       response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: input.prompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: input.temperature ?? 0.2,
-            responseMimeType: 'application/json',
-            ...(input.responseJsonSchema ? { responseJsonSchema: input.responseJsonSchema } : {}),
-          },
-        }),
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
     } catch (error: unknown) {

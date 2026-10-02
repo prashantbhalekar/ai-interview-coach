@@ -114,6 +114,11 @@ export interface InterviewSessionDetail {
   title: string;
   focusArea: string | null;
   status: string;
+  questionGeneration: {
+    source: 'ai' | 'fallback';
+    provider?: string;
+    model?: string;
+  } | null;
   currentQuestionIndex: number;
   currentQuestion: InterviewQuestion | null;
   questions: InterviewQuestion[];
