@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { EmbeddingSourceType } from '@prisma/client';
 import { AiRateLimitGuard } from '../common/guards/ai-rate-limit.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { EmbeddingQueueService } from '../queue/embedding-queue.service';
 import { AiService } from './ai.service';
 import { AnalyzeResumeDto } from './dto/analyze-resume.dto';
@@ -27,6 +28,7 @@ export class AiController {
 
   constructor(
     private readonly aiService: AiService,
+    private readonly runtimeConfigService: RuntimeConfigService,
     private readonly embeddingQueueService: EmbeddingQueueService,
   ) {}
 
@@ -42,7 +44,9 @@ export class AiController {
       jobDescription: dto.jobDescription,
     });
 
-    await this.enqueueEmbeddingJobs(request.user.sub, dto);
+    if (this.runtimeConfigService.isEmbeddingsEnabled()) {
+      await this.enqueueEmbeddingJobs(request.user.sub, dto);
+    }
 
     return response;
   }

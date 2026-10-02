@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { StorageService } from '../storage/storage.service';
 import type { ResumeStatusResponseDto } from './dto/resume-status-response.dto';
 import type { ResumeUploadResponseDto } from './dto/resume-upload-response.dto';
@@ -16,6 +17,7 @@ interface UploadedFile {
 export class ResumesService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly runtimeConfigService: RuntimeConfigService,
     private readonly storageService: StorageService,
     private readonly resumeQueueService: ResumeQueueService,
   ) {}
@@ -45,18 +47,21 @@ export class ResumesService {
       },
     });
 
-    const queueJobId = await this.resumeQueueService.enqueueResumeProcessing({
-      resumeId: createdResume.id,
-      userId: createdResume.userId,
-      storageKey: createdResume.storageKey,
-    });
+    const queueEnabled = this.runtimeConfigService.isQueueEnabled();
+    const queueJobId = queueEnabled
+      ? await this.resumeQueueService.enqueueResumeProcessing({
+          resumeId: createdResume.id,
+          userId: createdResume.userId,
+          storageKey: createdResume.storageKey,
+        })
+      : `sync-${createdResume.id}`;
 
     const resume = await this.prisma.resume.update({
       where: {
         id: createdResume.id,
       },
       data: {
-        status: 'QUEUED',
+        status: queueEnabled ? 'QUEUED' : 'COMPLETED',
       },
     });
 

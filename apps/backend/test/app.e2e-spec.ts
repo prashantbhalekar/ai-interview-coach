@@ -115,6 +115,7 @@ describe('App (e2e)', () => {
   const prismaMock = {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
+    $queryRaw: jest.fn(async () => [{ ok: 1 }]),
     user: {
       findUnique: jest.fn(
         async ({ where }: { where: { email?: string; id?: string } }) =>
@@ -417,7 +418,11 @@ describe('App (e2e)', () => {
     process.env.NODE_ENV = 'test';
     process.env.PORT = '3001';
     process.env.FRONTEND_URL = 'http://localhost:3000';
-    process.env.REDIS_URL = 'redis://localhost:6380';
+    process.env.REDIS_ENABLED = 'false';
+    process.env.QUEUE_ENABLED = 'false';
+    process.env.CACHE_ENABLED = 'false';
+    process.env.EMBEDDINGS_ENABLED = 'false';
+    process.env.RAG_ENABLED = 'false';
     process.env.DATABASE_URL =
       'postgresql://postgres:postgres@localhost:5432/ai_interview_coach_test?schema=public';
     process.env.JWT_SECRET = 'test-secret-123';
@@ -491,6 +496,24 @@ describe('App (e2e)', () => {
       service: 'backend',
     });
     expect(typeof response.body.timestamp).toBe('string');
+  });
+
+  it('/api/v1/health/readiness (GET) succeeds when Redis is disabled', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/health/readiness').expect(200);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      status: 'ok',
+      service: 'backend',
+      dependencies: {
+        database: {
+          status: 'up',
+        },
+        redis: {
+          status: 'disabled',
+        },
+      },
+    });
   });
 
   it('/api/v1/users/me (GET) rejects unauthenticated requests', async () => {
@@ -582,7 +605,7 @@ describe('App (e2e)', () => {
     });
   });
 
-  it('/api/v1/resumes/upload (POST) queues resume and returns accepted status', async () => {
+  it('/api/v1/resumes/upload (POST) accepts resume and completes synchronously when queue is disabled', async () => {
     const registerResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
@@ -602,14 +625,15 @@ describe('App (e2e)', () => {
       .expect(202);
 
     expect(uploadResponse.body).toMatchObject({
-      status: 'QUEUED',
+      status: 'COMPLETED',
       fileName: 'resume.pdf',
       queueJobId: uploadResponse.body.queueJobId,
     });
     expect(typeof uploadResponse.body.resumeId).toBe('string');
     expect(typeof uploadResponse.body.queueJobId).toBe('string');
+    expect(uploadResponse.body.queueJobId).toMatch(/^sync-/);
     expect(storageMock.upload).toHaveBeenCalledTimes(1);
-    expect(resumeQueueMock.enqueueResumeProcessing).toHaveBeenCalledTimes(1);
+    expect(resumeQueueMock.enqueueResumeProcessing).toHaveBeenCalledTimes(0);
   });
 
   it('/api/v1/resumes/upload (POST) rejects non-PDF files', async () => {
@@ -674,7 +698,7 @@ describe('App (e2e)', () => {
     expect(statusResponse.body).toMatchObject({
       id: uploadResponse.body.resumeId,
       fileName: 'owner-resume.pdf',
-      status: 'QUEUED',
+      status: 'COMPLETED',
     });
 
     await request(app.getHttpServer())

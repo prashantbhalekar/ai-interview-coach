@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { RuntimeConfigModule } from './config/runtime-config.module';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.schema';
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       validate: validateEnv,
     }),
+    RuntimeConfigModule,
     AiModule,
     PrismaModule,
     AuthModule,

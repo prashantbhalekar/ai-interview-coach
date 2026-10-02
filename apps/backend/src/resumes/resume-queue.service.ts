@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 
 interface ResumeProcessingJobPayload {
   resumeId: string;
@@ -16,9 +17,18 @@ export class ResumeQueueService implements OnModuleDestroy {
   private readonly logger = new Logger(ResumeQueueService.name);
   private queue: Queue<ResumeProcessingJobPayload> | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
+  ) {}
 
   async enqueueResumeProcessing(payload: ResumeProcessingJobPayload): Promise<string> {
+    if (!this.runtimeConfigService.isQueueEnabled()) {
+      const syncJobId = `sync-${payload.resumeId}`;
+      this.logger.log(`Queue disabled; skipping resume queue and returning ${syncJobId}`);
+      return syncJobId;
+    }
+
     const queue = this.getQueue();
 
     const job = await queue.add(RESUME_PROCESSING_JOB_NAME, payload, {
@@ -49,6 +59,10 @@ export class ResumeQueueService implements OnModuleDestroy {
   private getQueue(): Queue<ResumeProcessingJobPayload> {
     if (this.queue) {
       return this.queue;
+    }
+
+    if (!this.runtimeConfigService.isRedisEnabled()) {
+      throw new Error('Redis must be enabled when queue processing is enabled');
     }
 
     const redisUrl = this.configService.getOrThrow<string>('REDIS_URL');

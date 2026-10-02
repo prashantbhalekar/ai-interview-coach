@@ -1,10 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 type DependencyHealth = {
-  status: 'up' | 'down';
+  status: 'up' | 'down' | 'disabled';
   latencyMs: number;
   error?: string;
 };
@@ -26,6 +27,7 @@ export class HealthService implements OnModuleDestroy {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -40,7 +42,8 @@ export class HealthService implements OnModuleDestroy {
 
   async getReadinessPayload(): Promise<ReadinessPayload> {
     const [database, redis] = await Promise.all([this.checkDatabase(), this.checkRedis()]);
-    const success = database.status === 'up' && redis.status === 'up';
+    const redisHealthy = redis.status === 'up' || redis.status === 'disabled';
+    const success = database.status === 'up' && redisHealthy;
 
     return {
       success,
@@ -80,6 +83,13 @@ export class HealthService implements OnModuleDestroy {
   }
 
   private async checkRedis(): Promise<DependencyHealth> {
+    if (!this.runtimeConfigService.isRedisEnabled()) {
+      return {
+        status: 'disabled',
+        latencyMs: 0,
+      };
+    }
+
     const start = Date.now();
 
     try {

@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { EmbeddingSourceType } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 
 export interface EmbeddingProcessingJobPayload {
   userId: string;
@@ -18,9 +19,20 @@ const EMBEDDING_PROCESSING_JOB_NAME = 'embedding.process';
 export class EmbeddingQueueService implements OnModuleDestroy {
   private queue: Queue<EmbeddingProcessingJobPayload> | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
+  ) {}
 
   async enqueueEmbeddingProcessing(payload: EmbeddingProcessingJobPayload): Promise<string> {
+    if (!this.runtimeConfigService.isEmbeddingsEnabled()) {
+      return `embeddings-disabled-${payload.sourceRefId}`;
+    }
+
+    if (!this.runtimeConfigService.isQueueEnabled()) {
+      return `queue-disabled-${payload.sourceRefId}`;
+    }
+
     const queue = this.getQueue();
     const jobId = `${payload.sourceType.toLowerCase()}-${payload.userId}-${payload.sourceRefId}`;
 
@@ -47,6 +59,10 @@ export class EmbeddingQueueService implements OnModuleDestroy {
   private getQueue(): Queue<EmbeddingProcessingJobPayload> {
     if (this.queue) {
       return this.queue;
+    }
+
+    if (!this.runtimeConfigService.isRedisEnabled()) {
+      throw new Error('Redis must be enabled when queue processing is enabled');
     }
 
     this.queue = new Queue<EmbeddingProcessingJobPayload>(EMBEDDING_QUEUE_NAME, {

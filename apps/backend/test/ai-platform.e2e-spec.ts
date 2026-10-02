@@ -66,7 +66,11 @@ describe('AI Platform (phase 6)', () => {
       OLLAMA_MODEL: 'llama3.1:8b',
     });
 
-    const service = new AiService(config, successUsage, {
+    const runtimeConfig = {
+      isCacheEnabled: () => true,
+    };
+
+    const service = new AiService(config, runtimeConfig as never, successUsage, {
       openai: openAiProvider,
       ollama: ollamaProvider,
       gemini: geminiProvider,
@@ -116,6 +120,9 @@ describe('AI Platform (phase 6)', () => {
         AI_RESUME_ANALYSIS_CACHE_TTL_MS: 120000,
         AI_RESUME_ANALYSIS_CACHE_MAX_ENTRIES: 200,
       }),
+      {
+        isCacheEnabled: () => true,
+      } as never,
       usage,
       {
         openai: openAiProvider,
@@ -163,32 +170,39 @@ describe('AI Platform (phase 6)', () => {
       OLLAMA_MODEL: 'llama3.1:8b',
     });
 
-    const service = new AiService(config, usage, {
-      gemini: {
-        name: 'gemini',
-        generateStructuredOutput: jest.fn(async () => ({
-          provider: 'gemini' as const,
-          model: 'gemini-2.5-flash-lite',
-          text: 'not-json-response',
-        })),
+    const service = new AiService(
+      config,
+      {
+        isCacheEnabled: () => true,
+      } as never,
+      usage,
+      {
+        gemini: {
+          name: 'gemini',
+          generateStructuredOutput: jest.fn(async () => ({
+            provider: 'gemini' as const,
+            model: 'gemini-2.5-flash-lite',
+            text: 'not-json-response',
+          })),
+        },
+        openai: {
+          name: 'openai',
+          generateStructuredOutput: jest.fn(async () => ({
+            provider: 'openai' as const,
+            model: 'gpt-4o-mini',
+            text: '{}',
+          })),
+        },
+        ollama: {
+          name: 'ollama',
+          generateStructuredOutput: jest.fn(async () => ({
+            provider: 'ollama' as const,
+            model: 'llama3.1:8b',
+            text: '{}',
+          })),
+        },
       },
-      openai: {
-        name: 'openai',
-        generateStructuredOutput: jest.fn(async () => ({
-          provider: 'openai' as const,
-          model: 'gpt-4o-mini',
-          text: '{}',
-        })),
-      },
-      ollama: {
-        name: 'ollama',
-        generateStructuredOutput: jest.fn(async () => ({
-          provider: 'ollama' as const,
-          model: 'llama3.1:8b',
-          text: '{}',
-        })),
-      },
-    });
+    );
 
     await expect(
       service.analyzeResume({

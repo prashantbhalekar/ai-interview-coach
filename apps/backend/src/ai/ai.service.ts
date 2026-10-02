@@ -7,6 +7,7 @@ import {
 import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { ZodError, ZodSchema } from 'zod';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { AI_PROVIDER_REGISTRY } from './ai.constants';
 import { AiUsageService } from './ai-usage.service';
 import { buildInterviewQuestionsPrompt } from './prompts/interview-questions.prompt';
@@ -61,6 +62,7 @@ export class AiService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
     private readonly aiUsageService: AiUsageService,
     @Inject(AI_PROVIDER_REGISTRY)
     private readonly providerRegistry: Record<string, AiProvider>,
@@ -260,6 +262,10 @@ export class AiService {
   }
 
   private getCachedResumeAnalysis(cacheKey: string): AnalyzeResumeOutput | null {
+    if (!this.runtimeConfigService.isCacheEnabled()) {
+      return null;
+    }
+
     const ttlMs = this.configService.get<number>('AI_RESUME_ANALYSIS_CACHE_TTL_MS', 120000);
     if (ttlMs <= 0) {
       return null;
@@ -279,6 +285,10 @@ export class AiService {
   }
 
   private cacheResumeAnalysis(cacheKey: string, value: AnalyzeResumeOutput): void {
+    if (!this.runtimeConfigService.isCacheEnabled()) {
+      return;
+    }
+
     const ttlMs = this.configService.get<number>('AI_RESUME_ANALYSIS_CACHE_TTL_MS', 120000);
     if (ttlMs <= 0) {
       return;

@@ -26,7 +26,15 @@ describe('AI Controller Queue Integration (phase 8)', () => {
       enqueueEmbeddingProcessing: jest.fn(async () => 'job-id'),
     };
 
-    const controller = new AiController(aiService as never, embeddingQueueService as never);
+    const runtimeConfigService = {
+      isEmbeddingsEnabled: jest.fn(() => true),
+    };
+
+    const controller = new AiController(
+      aiService as never,
+      runtimeConfigService as never,
+      embeddingQueueService as never,
+    );
 
     const dto = {
       resumeText: '  Built resilient APIs with NestJS and PostgreSQL.  ',
@@ -107,7 +115,15 @@ describe('AI Controller Queue Integration (phase 8)', () => {
         .mockResolvedValueOnce('job-id-2'),
     };
 
-    const controller = new AiController(aiService as never, embeddingQueueService as never);
+    const runtimeConfigService = {
+      isEmbeddingsEnabled: jest.fn(() => true),
+    };
+
+    const controller = new AiController(
+      aiService as never,
+      runtimeConfigService as never,
+      embeddingQueueService as never,
+    );
 
     const result = await controller.analyzeResume(
       {
@@ -124,5 +140,56 @@ describe('AI Controller Queue Integration (phase 8)', () => {
 
     expect(result).toEqual(response);
     expect(embeddingQueueService.enqueueEmbeddingProcessing).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips embedding queue work when embeddings are disabled', async () => {
+    const response = {
+      provider: 'gemini',
+      model: 'gemini-2.5-flash-lite',
+      result: {
+        overallScore: 75,
+        summary: 'Summary',
+        strengths: ['Strong backend profile'],
+        gaps: ['Need more system design detail'],
+        recommendations: ['Add production metrics'],
+        keywordsMatched: ['Node.js'],
+        keywordsMissing: ['Kubernetes'],
+      },
+    };
+
+    const aiService = {
+      analyzeResume: jest.fn(async () => response),
+    };
+
+    const embeddingQueueService = {
+      enqueueEmbeddingProcessing: jest.fn(async () => 'job-id'),
+    };
+
+    const runtimeConfigService = {
+      isEmbeddingsEnabled: jest.fn(() => false),
+    };
+
+    const controller = new AiController(
+      aiService as never,
+      runtimeConfigService as never,
+      embeddingQueueService as never,
+    );
+
+    const result = await controller.analyzeResume(
+      {
+        user: {
+          sub: 'user-3',
+          email: 'user3@example.com',
+        },
+      },
+      {
+        resumeText: 'Resume text',
+        jobDescription: 'Job description text',
+      },
+    );
+
+    expect(result).toEqual(response);
+    expect(runtimeConfigService.isEmbeddingsEnabled).toHaveBeenCalled();
+    expect(embeddingQueueService.enqueueEmbeddingProcessing).not.toHaveBeenCalled();
   });
 });

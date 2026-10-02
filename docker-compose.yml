@@ -43,6 +43,13 @@ services:
       PORT: ${BACKEND_PORT:-3001}
       DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/ai_interview_coach}
       REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379}
+      REDIS_ENABLED: ${REDIS_ENABLED:-false}
+      QUEUE_ENABLED: ${QUEUE_ENABLED:-false}
+      CACHE_ENABLED: ${CACHE_ENABLED:-false}
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-memory}
+      EMBEDDINGS_ENABLED: ${EMBEDDINGS_ENABLED:-false}
+      RAG_ENABLED: ${RAG_ENABLED:-false}
       JWT_SECRET: ${JWT_SECRET:-change_me_now}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       AI_PROVIDER: ${AI_PROVIDER:-gemini}

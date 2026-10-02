@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 
 interface InterviewProcessingJobPayload {
   interviewSessionId: string;
@@ -14,9 +15,16 @@ const INTERVIEW_PROCESSING_JOB_NAME = 'interview.process';
 export class InterviewQueueService implements OnModuleDestroy {
   private queue: Queue<InterviewProcessingJobPayload> | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
+  ) {}
 
   async enqueueInterviewProcessing(payload: InterviewProcessingJobPayload): Promise<string> {
+    if (!this.runtimeConfigService.isQueueEnabled()) {
+      return `queue-disabled-interview-${payload.interviewSessionId}`;
+    }
+
     const queue = this.getQueue();
     const job = await queue.add(INTERVIEW_PROCESSING_JOB_NAME, payload, {
       jobId: `interview-${payload.interviewSessionId}`,
@@ -41,6 +49,10 @@ export class InterviewQueueService implements OnModuleDestroy {
   private getQueue(): Queue<InterviewProcessingJobPayload> {
     if (this.queue) {
       return this.queue;
+    }
+
+    if (!this.runtimeConfigService.isRedisEnabled()) {
+      throw new Error('Redis must be enabled when queue processing is enabled');
     }
 
     this.queue = new Queue<InterviewProcessingJobPayload>(INTERVIEW_QUEUE_NAME, {

@@ -4,8 +4,10 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RuntimeConfigService } from '../../config/runtime-config.service';
 
 interface RateLimitBucket {
   count: number;
@@ -22,16 +24,34 @@ interface RequestWithIdentity {
 
 @Injectable()
 export class AiRateLimitGuard implements CanActivate {
+  private readonly logger = new Logger(AiRateLimitGuard.name);
   private readonly requestsByIdentity = new Map<string, RateLimitBucket>();
   private readonly windowMs: number;
   private readonly maxRequests: number;
+  private warnedAboutRedisStore = false;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly runtimeConfigService: RuntimeConfigService,
+  ) {
     this.windowMs = this.configService.get<number>('AI_RATE_LIMIT_WINDOW_MS', 60000);
     this.maxRequests = this.configService.get<number>('AI_RATE_LIMIT_MAX_REQUESTS', 10);
   }
 
   canActivate(context: ExecutionContext): boolean {
+    if (!this.runtimeConfigService.isRateLimitEnabled()) {
+      return true;
+    }
+
+    if (this.runtimeConfigService.getRateLimitStore() === 'redis') {
+      if (!this.warnedAboutRedisStore) {
+        this.logger.warn(
+          'RATE_LIMIT_STORE=redis is not implemented yet; using memory store fallback',
+        );
+        this.warnedAboutRedisStore = true;
+      }
+    }
+
     if (this.maxRequests <= 0) {
       return true;
     }
